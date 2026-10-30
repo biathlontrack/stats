@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1C25">
+<meta name="description" content="Classements de la Coupe du monde de biathlon, résultats des courses, fiches et statistiques des athlètes, à partir des données IBU.">
+<title>Biathlon Datacenter</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230E1C25'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23F3F6F8' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23F2C300'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Saira+Condensed:wght@500;600;700&display=swap">
+<style>
+
+/* Layout : bandeau d'encre en tête, une colonne de travail de 1100px, tableaux de résultats façon tableau d'affichage du stade. */
+:root{
+  --snow:#F3F6F8; --paper:#FFFFFF; --ink:#0E1C25; --muted:#5A6B77; --line:#DAE2E7; --line-soft:#EAF0F3;
+  --accent:#1D5A8C; --accent-soft:#E3EEF7; --bib:#F2C300; --bib-ink:#2B2300; --red:#C8262F;
+  --gold:#C9A227; --silver:#9AA6AE; --bronze:#B07444; --hit:#FFFFFF; --target:#111A20; --good:#2F7D4F;
+  --band:#0E1C25; --band-ink:#F3F6F8; --band-muted:#94A6B2;
+  --display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --snow:#0B1318; --paper:#111C23; --ink:#E6EDF1; --muted:#8FA1AC; --line:#22323C; --line-soft:#1A262E;
+  --accent:#7DB4E3; --accent-soft:#16293A; --bib:#F2C300; --bib-ink:#2B2300; --red:#F0636B;
+  --gold:#D9B33D; --silver:#B4BFC6; --bronze:#C98A58; --hit:#F3F6F8; --target:#000000; --good:#5DBB84;
+  --band:#060C10; --band-ink:#E6EDF1; --band-muted:#7F929E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --snow:#0B1318; --paper:#111C23; --ink:#E6EDF1; --muted:#8FA1AC; --line:#22323C; --line-soft:#1A262E;
+  --accent:#7DB4E3; --accent-soft:#16293A; --bib:#F2C300; --bib-ink:#2B2300; --red:#F0636B;
+  --gold:#D9B33D; --silver:#B4BFC6; --bronze:#C98A58; --hit:#F3F6F8; --target:#000000; --good:#5DBB84;
+  --band:#060C10; --band-ink:#E6EDF1; --band-muted:#7F929E; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--snow);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.band{background:var(--band);color:var(--band-ink);position:sticky;top:0;z-index:20}
+.band .wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase;color:var(--band-ink)}
+.brand:hover{text-decoration:none}
+.brand .t5{display:flex;gap:3px}
+.brand .t5 i{width:9px;height:9px;border-radius:50%;background:var(--band-ink);display:block}
+.brand .t5 i:nth-child(4){background:transparent;box-shadow:inset 0 0 0 1.5px var(--band-muted)}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs a{color:var(--band-muted);font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 10px;border-radius:4px}
+nav.tabs a:hover{color:var(--band-ink);text-decoration:none;background:rgba(255,255,255,.06)}
+nav.tabs a.on{color:var(--band-ink);box-shadow:inset 0 -3px 0 var(--bib)}
+
+main{padding-block:28px 64px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.01em;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,5vw,44px);text-transform:uppercase}
+h2{font-size:24px;text-transform:uppercase;letter-spacing:.03em}
+h3{font-size:19px;text-transform:uppercase;letter-spacing:.03em}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:65ch;margin:8px 0 0}
+.stack{display:flex;flex-direction:column;gap:24px}
+.head{display:flex;flex-direction:column;gap:6px}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+select,input[type=text],input[type=search]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:38px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.seg button{font:inherit;font-weight:500;border:0;background:transparent;color:var(--muted);padding:8px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.btn{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:6px;padding:8px 14px;cursor:pointer;min-height:38px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:8px}
+.panel>.ph{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel>.pb{padding:16px}
+.scroll{overflow-x:auto}
+
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+td.num,th.num{text-align:right}
+td.rk{font-family:var(--display);font-weight:700;font-size:18px;width:52px}
+td.mono,.mono{font-family:var(--mono);font-size:13.5px}
+.nm{font-weight:600;color:var(--ink)}
+.nm:hover{color:var(--accent)}
+.nat{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.flag{font-size:16px;line-height:1}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+.bib{display:inline-block;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:3px;margin-left:8px;vertical-align:2px}
+.bib.y{background:var(--bib);color:var(--bib-ink)}
+.bib.r{background:var(--red);color:#fff}
+.med{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-family:var(--display);font-weight:700;font-size:14px;color:#14100A}
+.med.g{background:var(--gold)}.med.s{background:var(--silver)}.med.b{background:var(--bronze)}
+
+/* Cibles : 5 par passage. Blanc = touché (le volet blanc tombe), noir cerclé de rouge = manqué. */
+.targets{display:inline-flex;gap:8px;align-items:center;white-space:nowrap}
+.stage{display:inline-flex;gap:2px}
+.tg{width:10px;height:10px;border-radius:50%;display:block}
+.tg.h{background:var(--hit);box-shadow:inset 0 0 0 2px var(--target)}
+.tg.m{background:var(--target);box-shadow:0 0 0 1.5px var(--red)}
+.sh-raw{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.kpi{background:var(--paper);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi b{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
+.kpi span{font-size:12px;color:var(--muted);letter-spacing:.04em}
+
+.profile{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start}
+.photo{width:120px;height:150px;border-radius:8px;background:var(--line-soft);object-fit:cover;border:1px solid var(--line)}
+.photo.ph0{display:grid;place-items:center;font-family:var(--display);font-size:42px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 22px;margin-top:14px}
+.fact{min-width:0}
+.fact dt{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fact dd{margin:0;overflow-wrap:anywhere}
+@media (max-width:560px){.profile{grid-template-columns:1fr}.photo{width:96px;height:120px}}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.grid2>*{min-width:0}
+.events{display:flex;flex-direction:column;gap:10px}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:8px}
+.ev>button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 16px;cursor:pointer}
+.ev>button:focus-visible{outline:2px solid var(--accent)}
+.ev .no{font-family:var(--display);font-size:22px;font-weight:700;color:var(--muted)}
+.ev .pl{font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase}
+.ev.now{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.races{border-top:1px solid var(--line);padding:6px 16px 12px}
+.race{display:grid;grid-template-columns:1fr auto;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.race:last-child{border-bottom:0}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:var(--line-soft);color:var(--muted)}
+.tag.live{background:var(--red);color:#fff}
+
+.note{background:var(--accent-soft);border-radius:8px;padding:12px 16px;color:var(--ink);font-size:14px}
+.err{border:1px solid var(--red);border-radius:8px;padding:14px 16px;background:var(--paper)}
+.err b{color:var(--red)}
+.loading{color:var(--muted);padding:24px 0;display:flex;gap:10px;align-items:center}
+.loading .t5{display:flex;gap:4px}
+.loading .t5 i{width:9px;height:9px;border-radius:50%;background:var(--muted);opacity:.3;animation:shot 1.2s infinite}
+.loading .t5 i:nth-child(2){animation-delay:.15s}.loading .t5 i:nth-child(3){animation-delay:.3s}.loading .t5 i:nth-child(4){animation-delay:.45s}.loading .t5 i:nth-child(5){animation-delay:.6s}
+@keyframes shot{0%,100%{opacity:.3}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.loading .t5 i{animation:none;opacity:.6}}
+
+.chart svg{display:block;width:100%;height:auto}
+.chart text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.bar{height:8px;border-radius:4px;background:var(--line-soft);overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.split{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.show-sm{display:none}
+@media (max-width:600px){header.band{position:static}.hide-sm{display:none}.show-sm{display:block}.targets .sh-raw{display:none}td,th{padding:8px 8px}td.rk{width:40px;font-size:16px}nav.tabs a{font-size:15px;padding:5px 8px}}
+footer{color:var(--muted);font-size:13px;padding-block:24px;border-top:1px solid var(--line)}
+
+header.band{top:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--band)}
+header.band{padding-top:env(safe-area-inset-top,0px)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.badge{display:inline-flex;gap:6px;align-items:baseline;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper)}
+.badge b{font-family:var(--mono);font-weight:500;color:var(--accent)}
+td.legs{padding-top:0}
+.leg{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;align-items:center;font-size:13px;padding:3px 0;color:var(--muted)}
+.leg a{color:var(--ink)}
+.fresh{display:inline-flex;align-items:center;gap:6px}
+.fresh i{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block}
+.fresh.old i{background:var(--muted)}
+.rk1{color:var(--gold)}
+td.medal-1{font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--gold) 22%,transparent)}
+td.medal-2{font-weight:700;background:color-mix(in srgb,var(--silver) 25%,transparent)}
+td.medal-3{font-weight:700;background:color-mix(in srgb,var(--bronze) 22%,transparent)}
+.sub{font-size:12px;color:var(--muted);font-family:var(--body)}
+.ext{font-size:13px}
+th.grp{text-align:center;border-bottom:0;padding-bottom:0}
+@media (max-width:600px){header.band{position:sticky}.band .wrap{gap:6px 16px;padding-block:8px}}
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="#/classements" aria-label="Biathlon Datacenter, accueil"><span class="t5" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Biathlon Datacenter</a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#/classements" data-tab="classements">Classements</a>
+      <a href="#/nations" data-tab="nations">Nations</a>
+      <a href="#/courses" data-tab="courses">Courses</a>
+      <a href="#/recherche" data-tab="recherche">Athlètes</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="view" aria-live="polite"></main>
+<footer><div class="wrap" id="foot">Données : Datacenter IBU (biathlonresults.com). Site non officiel, sans lien avec l'IBU.</div></footer>
+
+<script>
+"use strict";
+/* ================================================================ utilitaires */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { const m = String(v ?? "").match(/\d+/); return m ? parseInt(m[0], 10) : null; };
+const avg = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+const fmt1 = v => v == null ? "—" : (Math.round(v * 10) / 10).toString().replace(".", ",");
+const pct = (a, b) => b ? Math.round(1000 * a / b) / 10 : null;
+const fmtPct = v => v == null ? "—" : String(v).replace(".", ",") + " %";
+const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem("bdc:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("bdc:" + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ================================================================ données */
+let META = null;
+const memo = new Map();
+class Missing extends Error {}
+function data(path, { fresh = false } = {}) {
+  if (!fresh && memo.has(path)) return memo.get(path);
+  const v = META ? "?v=" + encodeURIComponent(META.generatedAt) + (fresh ? "&t=" + Date.now() : "") : "?t=" + Date.now();
+  const p = fetch("data/" + path + v, { cache: fresh || !META ? "no-store" : "default" }).then(async r => {
+    if (r.status === 404) throw new Missing(path);
+    if (!r.ok) throw new Error("Erreur " + r.status + " sur " + path);
+    return r.json();
+  });
+  memo.set(path, p);
+  p.catch(() => memo.delete(path));
+  return p;
+}
+const season = sid => data(`seasons/${sid}.json`);
+const cup = cid => data(`cups/${cid}.json`).then(d => d.Rows || []).catch(e => { if (e instanceof Missing) return []; throw e; });
+const race = (rid, o) => data(`races/${rid}.json`, o);
+const athlete = id => data(`athletes/${id}.json`);
+const athletesIndex = () => data("athletes.json");
+
+async function pool(items, n, fn) {
+  const out = new Array(items.length); let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
+    while (i < items.length) { const k = i++; try { out[k] = await fn(items[k], k); } catch (e) { out[k] = null; } }
+  }));
+  return out;
+}
+
+/* ================================================================ référentiels */
+const IOC = {FRA:"FR",NOR:"NO",GER:"DE",SWE:"SE",ITA:"IT",AUT:"AT",SUI:"CH",FIN:"FI",CZE:"CZ",SLO:"SI",SVK:"SK",POL:"PL",UKR:"UA",BLR:"BY",RUS:"RU",USA:"US",CAN:"CA",EST:"EE",LAT:"LV",LTU:"LT",BUL:"BG",ROU:"RO",KAZ:"KZ",CHN:"CN",JPN:"JP",KOR:"KR",BEL:"BE",NED:"NL",GBR:"GB",IRL:"IE",ESP:"ES",AUS:"AU",CRO:"HR",SRB:"RS",MDA:"MD",GRE:"GR",HUN:"HU",DEN:"DK",ISL:"IS",MGL:"MN",ARG:"AR",CHI:"CL",BRA:"BR",AND:"AD",BIH:"BA",MKD:"MK",MNE:"ME",TUR:"TR",GEO:"GE",ARM:"AM",LIE:"LI",LUX:"LU",NZL:"NZ",RSA:"ZA",IND:"IN",THA:"TH",UZB:"UZ",KGZ:"KG",POR:"PT",MEX:"MX",AIN:""};
+const NATION = {FRA:"France",NOR:"Norvège",GER:"Allemagne",SWE:"Suède",ITA:"Italie",AUT:"Autriche",SUI:"Suisse",FIN:"Finlande",CZE:"Tchéquie",SLO:"Slovénie",SVK:"Slovaquie",POL:"Pologne",UKR:"Ukraine",BLR:"Biélorussie",RUS:"Russie",USA:"États-Unis",CAN:"Canada",EST:"Estonie",LAT:"Lettonie",LTU:"Lituanie",BUL:"Bulgarie",ROU:"Roumanie",KAZ:"Kazakhstan",CHN:"Chine",JPN:"Japon",KOR:"Corée du Sud",BEL:"Belgique",NED:"Pays-Bas",GBR:"Grande-Bretagne",IRL:"Irlande",ESP:"Espagne",AUS:"Australie",CRO:"Croatie",SRB:"Serbie",MDA:"Moldavie",GRE:"Grèce",HUN:"Hongrie",DEN:"Danemark",MGL:"Mongolie",ARG:"Argentine",CHI:"Chili",BRA:"Brésil",AND:"Andorre",BIH:"Bosnie-Herzégovine",TUR:"Turquie",GEO:"Géorgie",LIE:"Liechtenstein",NZL:"Nouvelle-Zélande",AIN:"Athlètes neutres"};
+const flag = ioc => { const iso = IOC[ioc]; return iso ? String.fromCodePoint(...[...iso].map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : ""; };
+const natHTML = ioc => ioc ? `<span class="nat"><span class="flag" aria-hidden="true">${flag(ioc)}</span>${esc(ioc)}</span>` : "";
+const natName = ioc => NATION[ioc] || ioc;
+
+const DISC = {SP:"Sprint",PU:"Poursuite",MS:"Mass start",IN:"Individuel",SI:"Individuel court",RL:"Relais",SR:"Relais simple mixte",SS:"Super sprint",MR:"Relais mixte",TS:"Général"};
+const CUPTYPE = {TS:"Général",SP:"Sprint",PU:"Poursuite",IN:"Individuel",MS:"Mass start",NC:"Coupe des nations",RL:"Relais",MX:"Relais mixtes"};
+const CUPORDER = ["TS","SP","PU","IN","MS","RL","NC","MX"];
+const LEVEL = {WC:"Coupe du monde",WCH:"Mondiaux",OWG:"Jeux olympiques","IBU C.":"IBU Cup",IBU:"IBU Cup",ECH:"Championnats d'Europe",JWCH:"Mondiaux juniors",YWCH:"Mondiaux jeunes",JC:"Junior Cup",JECH:"Europe juniors",SWCH:"Mondiaux d'été"};
+const levelName = l => LEVEL[l] || (/^SB/.test(l || "") ? "Biathlon d'été" : (/REG/.test(l || "") ? "Course régionale" : (l || "")));
+const TOP = new Set(["WC","WCH","OWG"]);
+const TEAM = new Set(["RL","SR","MR"]);
+
+const seasonLabel = id => id && /^\d{4}$/.test(id) ? `${+id.slice(0,2) > 50 ? "19" : "20"}${id.slice(0,2)}/${id.slice(2)}` : (id || "");
+const seasonFromYear = y => /^\d\d\/\d\d$/.test(y || "") ? y.replace("/", "") : null;
+
+/* Tir */
+function positionsFor(code, n, sp) {
+  if (sp && sp.length === n && /^[PS]+$/.test(sp)) return sp.split("");
+  if (n === 2) return ["P","S"];
+  if (n === 4) return (code === "IN" || code === "SI") ? ["P","S","P","S"] : ["P","P","S","S"];
+  return Array(n).fill("?");
+}
+function parseShots(s, code, sp) {
+  const str = String(s ?? "").trim();
+  if (!/^\d+(\+\d+)+$/.test(str)) return null;
+  const misses = str.split("+").map(Number);
+  const pos = positionsFor(code, misses.length, sp);
+  return misses.map((m, i) => ({ m, p: pos[i] }));
+}
+function targetsHTML(s, code, sp) {
+  const st = parseShots(s, code, sp);
+  if (!st) return s ? `<span class="sh-raw">${esc(s)}</span>` : "";
+  const lab = {P:"couché",S:"debout","?":"passage"};
+  return `<span class="targets" title="${esc(s)}">` + st.map(x => {
+    const m = Math.min(5, x.m);
+    return `<span class="stage" role="img" aria-label="${lab[x.p]} : ${m} faute${m > 1 ? "s" : ""}">` + '<i class="tg h"></i>'.repeat(5 - m) + '<i class="tg m"></i>'.repeat(m) + "</span>";
+  }).join("") + `<span class="sh-raw">${esc(s)}</span></span>`;
+}
+
+const fmtDate = s => { if (!s) return ""; const d = new Date(s); return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); };
+const fmtDateLong = s => { if (!s) return ""; const d = new Date(s); return isNaN(d) ? String(s) : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); };
+const fmtDateTime = s => { if (!s) return ""; const d = new Date(s); return isNaN(d) ? String(s) : d.toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+function ago(s) {
+  const d = new Date(s); if (isNaN(d)) return "";
+  const m = Math.round((Date.now() - d) / 60000);
+  if (m < 1) return "à l'instant"; if (m < 60) return `il y a ${m} min`;
+  const h = Math.round(m / 60); if (h < 36) return `il y a ${h} h`;
+  return "le " + fmtDateLong(s);
+}
+
+const loadingHTML = (t = "Chargement") => `<div class="loading"><span class="t5" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>${esc(t)}…</div>`;
+const errorHTML = e => e instanceof Missing
+  ? `<div class="note">Ces données ne sont pas archivées sur ce site. Elles sont consultables sur <a href="https://www.biathlonresults.com/" target="_blank" rel="noopener">biathlonresults.com</a>.</div>`
+  : `<div class="err"><b>Les données n'ont pas pu être chargées.</b><div class="small muted" style="margin-top:4px">${esc(e && e.message || e)}</div><div class="small" style="margin-top:6px">Vérifiez votre connexion puis rechargez la page.</div></div>`;
+const medal = rk => rk === 1 ? '<span class="med g">1</span>' : rk === 2 ? '<span class="med s">2</span>' : rk === 3 ? '<span class="med b">3</span>' : "";
+const rkCell = (rk, raw) => medal(rk) || esc(rk ?? raw ?? "");
+const medalTd = v => { const n = num(v); return `<td class="num mono${n && n <= 3 ? " medal-" + n : ""}">${v ? esc(n ?? v) : '<span class="muted">·</span>'}</td>`; };
+
+/* ================================================================ état */
+const state = {
+  season: LS.get("season", null),
+  gender: LS.get("gender", "SW"),
+  cupType: LS.get("cupType", "TS"),
+  note: ""
+};
+const setSeason = s => { state.season = s; LS.set("season", s); };
+const setGender = g => { state.gender = g; LS.set("gender", g); };
+const seasonIds = () => META.seasons.map(s => s.SeasonId);
+
+async function boot() {
+  META = await data("meta.json", { fresh: true });
+  const ids = seasonIds();
+  if (!state.season || !ids.includes(state.season)) {
+    state.season = META.currentSeason && ids.includes(META.currentSeason) ? META.currentSeason : ids[0];
+    try {
+      const rows = await cup(`BT${state.season}SWRLCP__SWTS`);
+      if (!rows.length && META.currentResultsSeason && META.currentResultsSeason !== state.season && ids.includes(META.currentResultsSeason)) {
+        state.note = `La saison ${seasonLabel(state.season)} n'a pas encore de classement : affichage de ${seasonLabel(META.currentResultsSeason)}.`;
+        state.season = META.currentResultsSeason;
+      }
+    } catch (e) {}
+  }
+  const old = Date.now() - new Date(META.generatedAt) > 26 * 3600e3;
+  $("#foot").innerHTML = `<span class="fresh${old ? " old" : ""}"><i aria-hidden="true"></i>Données IBU mises à jour ${esc(ago(META.generatedAt))}</span> · ${META.athletes} athlètes, ${META.seasons.length} saisons. Source : Datacenter IBU (biathlonresults.com). Site non officiel, sans lien avec l'IBU.`;
+}
+
+function seasonSelect() {
+  return `<select id="season-sel" aria-label="Saison">${seasonIds().map(s => `<option value="${s}"${s === state.season ? " selected" : ""}>${seasonLabel(s)}</option>`).join("")}</select>`;
+}
+function genderSeg() {
+  return `<div class="seg" role="group" aria-label="Catégorie"><button data-g="SW" class="${state.gender === "SW" ? "on" : ""}">Femmes</button><button data-g="SM" class="${state.gender === "SM" ? "on" : ""}">Hommes</button></div>`;
+}
+function bindCommon(root, rerender) {
+  const sel = $("#season-sel", root);
+  if (sel) sel.addEventListener("change", () => { setSeason(sel.value); rerender(); });
+  root.querySelectorAll(".seg [data-g]").forEach(b => b.addEventListener("click", () => { setGender(b.dataset.g); rerender(); }));
+}
+
+/* ================================================================ classements */
+async function viewStandings(root) {
+  const render = () => viewStandings(root);
+  root.innerHTML = `<div class="stack">
+    <div class="head"><span class="eyebrow">Coupe du monde BMW IBU</span><h1>Classements</h1>
+      ${state.note ? `<p class="lede">${esc(state.note)}</p>` : ""}</div>
+    <div class="controls">${seasonSelect()}${genderSeg()}</div>
+    <div id="cupchips" class="chips"></div><div id="table">${loadingHTML()}</div></div>`;
+  bindCommon(root, render);
+  try {
+    const s = await season(state.season);
+    const cups = s.cups || [];
+    const typeOf = c => c.CupId.slice(-4, -2) === "MX" ? "MX" : c.CupId.slice(-2);
+    const mine = cups.filter(c => c.CupId.slice(-4, -2) === state.gender || c.CupId.slice(-4, -2) === "MX");
+    const types = [...new Set(mine.map(typeOf))].sort((a, b) => (CUPORDER.indexOf(a) + 99) % 99 - (CUPORDER.indexOf(b) + 99) % 99);
+    if (!types.length) { $("#table", root).innerHTML = `<div class="note">Aucun classement publié pour ${seasonLabel(state.season)}.</div>`; return; }
+    if (!types.includes(state.cupType)) state.cupType = types[0];
+    $("#cupchips", root).innerHTML = types.map(t => `<button class="chip${t === state.cupType ? " on" : ""}" data-t="${t}">${esc(CUPTYPE[t] || t)}</button>`).join("");
+    root.querySelectorAll("#cupchips .chip").forEach(b => b.addEventListener("click", () => { state.cupType = b.dataset.t; LS.set("cupType", b.dataset.t); render(); }));
+    const c = mine.find(x => typeOf(x) === state.cupType);
+    const full = await data(`cups/${c.CupId}.json`).catch(() => ({ Rows: [] }));
+    const rows = full.Rows || [];
+    if (!rows.length) { $("#table", root).innerHTML = `<div class="note">Ce classement est vide pour l'instant.</div>`; return; }
+    const lead = num(rows[0].Score) || 0;
+    const isTeam = !rows.some(r => r.IBUId && r.IBUId.length > 8);
+    const bibCls = state.cupType === "TS" ? "y" : "r";
+    const cat = state.cupType === "MX" ? "Mixte" : state.gender === "SW" ? "Femmes" : "Hommes";
+    const progress = full.RaceCount && full.TotalRaces ? `${full.RaceCount}/${full.TotalRaces} courses` : "";
+    $("#table", root).innerHTML = `<section class="panel">
+      <div class="ph"><h2>${esc(CUPTYPE[state.cupType] || c.Description)} · ${cat}</h2><span class="muted small">${seasonLabel(state.season)}${progress ? " · " + progress : ""} · ${rows.length} classé${rows.length > 1 ? "s" : ""}</span></div>
+      <div class="scroll"><table><thead><tr><th>Rang</th><th>${isTeam ? "Nation" : "Athlète"}</th><th class="hide-sm">Nation</th><th class="num">Points</th><th class="num">Écart</th></tr></thead><tbody>
+      ${rows.map((r, i) => { const rk = num(r.Rank), sc = num(r.Score);
+        const name = !isTeam ? `<a class="nm" href="#/athlete/${esc(r.IBUId)}">${esc(r.Name || r.ShortName)}</a>` : `<a class="nm" href="#/nation/${esc(r.Nat)}">${esc(natName(r.Nat) || r.Name)}</a>`;
+        return `<tr><td class="rk">${esc(rk ?? r.Rank ?? "")}</td><td>${name}${rk === 1 && !isTeam ? `<span class="bib ${bibCls}">Dossard ${bibCls === "y" ? "jaune" : "rouge"}</span>` : ""}<div class="show-sm">${natHTML(r.Nat)}</div></td><td class="hide-sm">${natHTML(r.Nat)}</td><td class="num mono">${esc(r.Score ?? "")}</td><td class="num mono muted">${i === 0 || sc == null ? "" : "−" + (lead - sc)}</td></tr>`; }).join("")}
+      </tbody></table></div></section>`;
+  } catch (e) { $("#table", root).innerHTML = errorHTML(e); }
+}
+
+/* ================================================================ nations */
+async function nationTable(sid) {
+  const [s, w, m] = await Promise.all([season(sid), cup(`BT${sid}SWRLCP__SWTS`), cup(`BT${sid}SWRLCP__SMTS`)]);
+  const by = {};
+  const get = n => by[n] || (by[n] = { nat: n, w: 0, m: 0, pts: 0, best: null });
+  Object.entries(s.starters || {}).forEach(([id, st]) => { if (!st.nat) return; const o = get(st.nat); st.g === "SW" ? o.w++ : o.m++; });
+  const pts = (rows) => rows.forEach(r => { if (!r.Nat) return; const o = get(r.Nat); o.pts += num(r.Score) || 0; const rk = num(r.Rank);
+    if (rk != null && (!o.best || rk < o.best.rk)) o.best = { rk, name: r.Name, id: r.IBUId }; });
+  pts(w); pts(m);
+  return { list: Object.values(by).sort((a, b) => b.pts - a.pts || (b.w + b.m) - (a.w + a.m)), s, w, m };
+}
+async function viewNations(root) {
+  const render = () => viewNations(root);
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Coupe du monde</span><h1>Nations</h1>
+    <p class="lede">Points des athlètes de chaque pays au classement général et nombre d'athlètes engagés en courses individuelles. Touchez une nation pour voir ses athlètes.</p></div>
+    <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
+  bindCommon(root, render);
+  try {
+    const { list } = await nationTable(state.season);
+    if (!list.length) { $("#out", root).innerHTML = `<div class="note">Pas encore de course disputée en ${seasonLabel(state.season)}.</div>`; return; }
+    const max = list[0].pts || 1;
+    $("#out", root).innerHTML = `<section class="panel"><div class="scroll"><table><thead><tr><th>#</th><th>Nation</th><th class="num">Femmes</th><th class="num">Hommes</th><th>Points</th><th class="hide-sm">Meilleur classement</th></tr></thead><tbody>
+      ${list.map((o, i) => `<tr><td class="rk">${i + 1}</td><td><a class="nm" href="#/nation/${esc(o.nat)}"><span class="flag" aria-hidden="true">${flag(o.nat)}</span> ${esc(natName(o.nat))}</a></td>
+        <td class="num mono">${o.w || ""}</td><td class="num mono">${o.m || ""}</td>
+        <td><div class="split"><div class="bar"><i style="width:${(100 * o.pts / max).toFixed(1)}%"></i></div><span class="mono">${o.pts}</span></div></td>
+        <td class="hide-sm">${o.best ? `${o.best.rk}<sup>e</sup> · <a href="#/athlete/${esc(o.best.id)}">${esc(o.best.name)}</a>` : ""}</td></tr>`).join("")}
+      </tbody></table></div></section>`;
+  } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
+}
+async function viewNation(root, nat) {
+  const render = () => viewNation(root, nat);
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/nations">Nations</a> · Coupe du monde</span>
+    <h1><span aria-hidden="true">${flag(nat)}</span> ${esc(natName(nat))}</h1></div>
+    <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
+  bindCommon(root, render);
+  try {
+    const { s, w, m } = await nationTable(state.season);
+    const build = (g, rows) => {
+      const list = new Map();
+      rows.filter(r => r.Nat === nat && r.IBUId).forEach(r => list.set(r.IBUId, { id: r.IBUId, name: r.Name, rk: num(r.Rank), pts: num(r.Score) }));
+      Object.entries(s.starters || {}).forEach(([id, st]) => { if (st.nat !== nat || st.g !== g) return;
+        const o = list.get(id) || { id, name: st.n, rk: null, pts: null }; o.starts = st.s; o.best = st.b; list.set(id, o); });
+      return [...list.values()].sort((a, b) => (a.rk ?? 999) - (b.rk ?? 999) || (b.starts || 0) - (a.starts || 0));
+    };
+    const panel = (title, list) => `<section class="panel"><div class="ph"><h2>${title}</h2><span class="muted small">${list.length} athlète${list.length > 1 ? "s" : ""}</span></div>
+      ${list.length ? `<div class="scroll"><table><thead><tr><th>Général</th><th>Athlète</th><th class="num">Points</th><th class="num">Départs</th><th class="num">Meilleur</th></tr></thead><tbody>
+      ${list.map(a => `<tr><td class="rk">${a.rk ?? '<span class="muted small">—</span>'}</td><td><a class="nm" href="#/athlete/${esc(a.id)}">${esc(a.name)}</a></td><td class="num mono">${a.pts ?? ""}</td><td class="num mono">${a.starts ?? ""}</td><td class="num mono">${a.best ? a.best + "e" : ""}</td></tr>`).join("")}
+      </tbody></table></div>` : `<div class="pb muted">Aucun athlète engagé.</div>`}</section>`;
+    $("#out", root).innerHTML = `<div class="grid2">${panel("Femmes", build("SW", w))}${panel("Hommes", build("SM", m))}</div>
+      <p class="small muted">« Départs » et « Meilleur » portent sur les courses individuelles de Coupe du monde, Mondiaux et JO de la saison.</p>`;
+  } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
+}
+
+/* ================================================================ courses */
+async function viewCourses(root) {
+  const render = () => viewCourses(root);
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Calendrier et résultats</span><h1>Courses</h1></div>
+    <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
+  bindCommon(root, render);
+  try {
+    const s = await season(state.season);
+    const ev = s.events || [];
+    if (!ev.length) { $("#out", root).innerHTML = `<div class="note">Calendrier non publié pour ${seasonLabel(state.season)}.</div>`; return; }
+    const today = new Date().toISOString().slice(0, 10);
+    let nWc = 0;
+    $("#out", root).innerHTML = `<div class="events">${ev.map(e => {
+      const now = String(e.StartDate).slice(0, 10) <= today && today <= String(e.EndDate).slice(0, 10);
+      const wc = /RLCP/.test(e.EventId); if (wc) nWc++;
+      const label = wc ? String(nWc).padStart(2, "0") : (/RLOG/.test(e.EventId) ? "JO" : /RLCH/.test(e.EventId) ? "CM" : "·");
+      const races = (e.races || []).map(c => `<div class="race"><div><a class="nm" href="#/course/${esc(c.RaceId)}">${esc(c.ShortDescription || c.Description || c.RaceId)}</a></div><div class="small muted">${fmtDateTime(c.StartTime)}</div></div>`).join("");
+      return `<div class="ev${now ? " now" : ""}"><button aria-expanded="${now}"><span class="no">${label}</span>
+        <span><span class="pl">${esc(e.ShortDescription || e.Organizer || e.EventId)}</span> ${natHTML(e.Nat)}<br><span class="small muted">${fmtDate(e.StartDate)} – ${fmtDate(e.EndDate)}${!wc ? " · " + esc(e.Description || "") : ""}</span></span>
+        ${now ? '<span class="tag live">En cours</span>' : '<span class="muted" aria-hidden="true">▾</span>'}</button><div class="races"${now ? "" : " hidden"}>${races || '<div class="muted small">Aucune course publiée.</div>'}</div></div>`; }).join("")}</div>`;
+    root.querySelectorAll(".ev>button").forEach(b => b.addEventListener("click", () => {
+      const box = b.nextElementSibling; box.hidden = !box.hidden; b.setAttribute("aria-expanded", String(!box.hidden));
+    }));
+  } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
+}
+
+let liveTimer = null;
+async function viewRace(root, rid) {
+  const code = rid.slice(-2), g = rid.slice(-4, -2);
+  const sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
+  const lvl = /RLOG/.test(rid) ? "OWG" : /RLCH/.test(rid) ? "WCH" : "WC";
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/courses">Courses</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
+    <div class="controls"><label class="small"><input type="checkbox" id="live"> Recharger toutes les 2 min</label><span class="small muted" id="stamp"></span><a class="ext" href="https://www.biathlonresults.com/" target="_blank" rel="noopener">Direct officiel ↗</a></div>
+    <div id="out">${loadingHTML()}</div></div>`;
+  const load = async fresh => {
+    try {
+      const d = await race(rid, { fresh });
+      const c = d.Competition || {}, ev = d.SportEvt || {};
+      $("#rtitle", root).textContent = c.ShortDescription || c.Description || DISC[code] || rid;
+      $("#rsub", root).textContent = [ev.ShortDescription || ev.Organizer, fmtDateTime(c.StartTime), c.StatusText].filter(Boolean).join(" · ");
+      $("#stamp", root).textContent = d.fetchedAt ? "Données récupérées " + ago(d.fetchedAt) : "";
+      const rows = d.Results || [];
+      const team = TEAM.has(code);
+      if (!rows.length) { $("#out", root).innerHTML = `<div class="note">Pas encore de résultats pour cette course.</div>`; return; }
+      const sp = c.ShootingPositions;
+      const timeOf = (r, first) => first ? (r.TotalTime || r.Result || "") : (r.Behind && r.Behind !== "0.0" ? (String(r.Behind).startsWith("+") ? r.Behind : "+" + r.Behind) : (r.TotalTime || r.Result || ""));
+      let body;
+      if (team) {
+        const teams = rows.filter(r => r.IsTeam);
+        const legs = rows.filter(r => !r.IsTeam);
+        body = teams.map((t, i) => { const rk = num(t.Rank); const mine = legs.filter(l => l.Nat === t.Nat && num(l.Rank) === rk && l.Leg);
+          return `<tr><td class="rk">${rk ?? `<span class="small muted">${esc(t.IRM || "")}</span>`}</td><td class="num mono muted hide-sm">${esc(t.Bib ?? "")}</td><td><a class="nm" href="#/nation/${esc(t.Nat)}">${esc(natName(t.Nat) || t.Name)}</a></td><td class="hide-sm">${natHTML(t.Nat)}</td><td><span class="sh-raw">${esc(t.Shootings || "")}</span></td><td class="num mono">${esc(timeOf(t, i === 0))}</td></tr>
+          ${mine.length ? `<tr><td></td><td class="hide-sm"></td><td colspan="4" class="legs">${mine.map(l => `<div class="leg"><span class="mono">${l.Leg}</span><a href="#/athlete/${esc(l.IBUId)}">${esc(l.Name)}</a><span class="sh-raw">${esc(l.Shootings || "")}</span><span class="mono">${esc(l.TotalTime || "")}</span></div>`).join("")}</td></tr>` : ""}`; }).join("");
+      } else {
+        body = rows.map((r, i) => { const rk = num(r.Rank);
+          return `<tr><td class="rk">${rk != null ? rk : `<span class="small muted">${esc(r.IRM || "")}</span>`}</td><td class="num mono muted hide-sm">${esc(r.Bib ?? "")}</td>
+          <td><a class="nm" href="#/athlete/${esc(r.IBUId)}">${esc(r.Name || r.ShortName)}</a><div class="show-sm">${natHTML(r.Nat)}</div></td><td class="hide-sm">${natHTML(r.Nat)}</td>
+          <td>${targetsHTML(r.Shootings, code, sp)}</td><td class="num mono">${d.IsStartList ? esc(r.StartInfo || "") : esc(timeOf(r, i === 0 && rk === 1))}</td></tr>`; }).join("");
+      }
+      $("#out", root).innerHTML = `${d.IsStartList ? '<div class="note" style="margin-bottom:12px">Liste de départ : la course n\'a pas encore eu lieu.</div>' : ""}<section class="panel"><div class="scroll"><table><thead><tr><th>Rang</th><th class="num hide-sm">Dos.</th><th>${team ? "Équipe" : "Athlète"}</th><th class="hide-sm">Nation</th><th>Tir</th><th class="num">${d.IsStartList ? "Départ" : "Temps"}</th></tr></thead><tbody>${body}</tbody></table></div></section>
+        ${team ? '<p class="small muted">Tir en relais : « tours de pénalité + balles de pioche » au couché puis au debout.</p>' : ""}`;
+    } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
+  };
+  await load(false);
+  const cb = $("#live", root);
+  cb.addEventListener("change", () => {
+    clearInterval(liveTimer); liveTimer = null;
+    if (cb.checked) { load(true); liveTimer = setInterval(() => { if (!document.body.contains(cb)) { clearInterval(liveTimer); return; } load(true); }, 120000); }
+  });
+}
+
+/* ================================================================ recherche */
+async function viewSearch(root) {
+  const last = LS.get("search2", { q: "", nat: "", g: "" });
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Athlètes</h1>
+    <p class="lede">Tous les athlètes classés ou engagés en Coupe du monde, Mondiaux ou JO sur les saisons archivées.</p></div>
+    <form class="controls" id="sf" role="search"><input type="search" id="q" placeholder="Nom ou prénom" value="${esc(last.q)}" aria-label="Nom ou prénom" autocomplete="off">
+      <select id="nat" aria-label="Nation"><option value="">Toutes les nations</option></select>
+      <select id="g" aria-label="Catégorie"><option value="">Femmes et hommes</option><option value="SW">Femmes</option><option value="SM">Hommes</option></select></form>
+    <div id="out">${loadingHTML()}</div></div>`;
+  let idx;
+  try { idx = await athletesIndex(); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
+  const nats = [...new Set(idx.map(a => a[2]).filter(Boolean))].sort((a, b) => natName(a).localeCompare(natName(b), "fr"));
+  $("#nat", root).insertAdjacentHTML("beforeend", nats.map(n => `<option value="${esc(n)}">${esc(natName(n))}</option>`).join(""));
+  $("#nat", root).value = last.nat; $("#g", root).value = last.g;
+  const keyed = idx.map(a => ({ id: a[0], name: a[1], nat: a[2], g: a[3], k: norm(a[1]) }));
+  const run = () => {
+    const q = norm($("#q", root).value.trim()), nat = $("#nat", root).value, g = $("#g", root).value;
+    LS.set("search2", { q: $("#q", root).value.trim(), nat, g });
+    const terms = q.split(/\s+/).filter(Boolean);
+    let list = keyed.filter(a => (!nat || a.nat === nat) && (!g || a.g === g) && terms.every(t => a.k.includes(t)));
+    const total = list.length;
+    list = list.slice(0, 150);
+    $("#out", root).innerHTML = !total ? `<div class="note">Aucun athlète ne correspond.</div>` : `<section class="panel"><div class="ph"><h2>${total} athlète${total > 1 ? "s" : ""}</h2>${total > list.length ? `<span class="small muted">${list.length} premiers affichés, affinez la recherche</span>` : ""}</div><div class="scroll"><table><thead><tr><th>Athlète</th><th>Nation</th><th class="hide-sm">Catégorie</th></tr></thead><tbody>
+      ${list.map(a => `<tr><td><a class="nm" href="#/athlete/${esc(a.id)}">${esc(a.name)}</a></td><td>${natHTML(a.nat)}</td><td class="hide-sm small muted">${a.g === "SW" ? "Femmes" : a.g === "SM" ? "Hommes" : ""}</td></tr>`).join("")}
+      </tbody></table></div></section>`;
+  };
+  let t; $("#q", root).addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 120); });
+  $("#nat", root).addEventListener("change", run); $("#g", root).addEventListener("change", run);
+  $("#sf", root).addEventListener("submit", e => { e.preventDefault(); run(); });
+  run();
+}
+
+/* ================================================================ fiche athlète */
+const FACT_FR = {"Age":"Âge","Languages":"Langues","Hobbies":"Loisirs","Born in":"Lieu de naissance","Residence":"Résidence","Profession":"Profession","Family":"Famille","Marital Status":"Situation familiale","Children":"Enfants","Height":"Taille","Weight":"Poids","Education":"Formation","WC debut":"Débuts en Coupe du monde","Biath.since":"Biathlon depuis","Club":"Club","Coach":"Entraîneur","Personal Coach":"Entraîneur personnel","National Coach":"Entraîneur national","In Team since":"En équipe nationale depuis","Skis":"Skis","Rifle":"Carabine","Ammunition":"Munitions","Race Suit":"Combinaison","Ski Boots":"Chaussures","Boots":"Chaussures","Poles":"Bâtons","Gloves":"Gants","Goggles":"Lunettes","Wax":"Fart","Binding":"Fixations","Bindings":"Fixations","WC Starts":"Départs en Coupe du monde","Hometown":"Ville","Nickname":"Surnom"};
+const BADGE_FR = {"Sharp Shooter":"Tireur d'élite","Prone Shooting Expert":"Expert au couché","Standing Shooting Expert":"Expert au debout","Skiing Star":"As du ski","Fast Shooter":"Tir rapide","100+ World Cups":"100+ Coupes du monde","200+ World Cups":"200+ Coupes du monde","50+ World Cups":"50+ Coupes du monde"};
+
+function factList(bio) {
+  const out = [];
+  if (bio.Birthdate) out.push(["Naissance", fmtDateLong(bio.Birthdate) + (bio.Age ? ` (${bio.Age} ans)` : "")]);
+  for (const key of ["Personal", "Sport", "Stats", "Equipment"]) {
+    (bio[key] || []).forEach(it => { if (!it || !it.Description || it.Value == null || it.Value === "") return;
+      if (it.Description === "Age") return;
+      out.push([FACT_FR[it.Description] || it.Description, String(it.Value), key === "Equipment"]); });
+  }
+  return out;
+}
+
+function rankChart(points) {
+  if (points.length < 2) return "";
+  const W = 640, H = 190, L = 34, R = 10, T = 14, B = 26;
+  const maxR = Math.min(110, Math.max(30, ...points.map(p => p.rk || 0)));
+  const x = i => L + i * (W - L - R) / (points.length - 1);
+  const y = r => T + (r - 1) * (H - T - B) / (maxR - 1);
+  const ticks = [1, 10, 20, 30, 40, 60, 80, 100].filter(t => t <= maxR);
+  const pts = points.map((p, i) => p.rk ? [x(i), y(p.rk)] : null);
+  const path = pts.filter(Boolean).map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Classement course par course">
+    <rect x="${L}" y="${(y(1) - 4).toFixed(1)}" width="${W - L - R}" height="${(y(10) - y(1) + 8).toFixed(1)}" fill="var(--accent-soft)"/>
+    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${t}</text>`).join("")}
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+    ${pts.map((p, i) => p ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${points[i].rk <= 3 ? 4.5 : 3}" fill="${points[i].rk === 1 ? "var(--gold)" : points[i].rk <= 3 ? "var(--ink)" : "var(--paper)"}" stroke="var(--accent)" stroke-width="1.5"><title>${esc(points[i].label)} : ${points[i].rk}e</title></circle>` : "").join("")}
+    ${points.map((p, i) => (points.length <= 14 || i % 2 === 0) ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(p.short)}</text>` : "").join("")}
+  </svg></div>`;
+}
+
+async function viewAthlete(root, id) {
+  root.innerHTML = loadingHTML("Chargement de la fiche");
+  let doc;
+  try { doc = await athlete(id); } catch (e) { root.innerHTML = errorHTML(e); return; }
+  const bio = doc.bio || {};
+  const res = (doc.results || []).map((r, i) => {
+    const code = (r.RaceId || "").slice(-2);
+    return { ...r, i, rk: num(r.Rank), code, team: TEAM.has(code) || (r.Shootings == null && /RL|SR/.test(r.Comp || "")), sid: seasonFromYear(r.Season) || (/^BT\d{4}/.test(r.RaceId) ? r.RaceId.slice(2, 6) : "") };
+  });
+  const name = bio.FullName || [bio.GivenName, bio.FamilyName].filter(Boolean).join(" ") || id;
+  const nat = bio.NAT || (/^BT[A-Z]{3}/.test(id) ? id.slice(2, 5) : "");
+  const gender = bio.GenderId === "W" ? "SW" : bio.GenderId === "M" ? "SM" : (id.charAt(5) === "2" ? "SW" : "SM");
+  const P = bio.Podiums || {};
+  const v = k => P[k] || 0;
+  const top = res.filter(r => TOP.has(r.Level));
+  const topInd = top.filter(r => !r.team);
+
+  /* Saison par saison : classements CdM (IBU) + stats officielles + nos décomptes */
+  const wcRows = new Map((bio.WC || []).map(w => [w.SeasonId || seasonFromYear(w.Year), w]));
+  const statIdx = new Map((bio.StatSeasons || []).map((y, i) => [seasonFromYear(y), i]));
+  const seasonsSet = new Set([...wcRows.keys(), ...statIdx.keys(), ...topInd.map(r => r.sid)].filter(Boolean));
+  const seasons = [...seasonsSet].sort((a, b) => { const k = s => (+s.slice(0, 2) > 50 ? 1900 : 2000) + +s.slice(0, 2); return k(b) - k(a); });
+  const statAt = (arr, i) => i == null || !arr ? null : arr[i];
+  const rowsS = seasons.map(sid => {
+    const w = wcRows.get(sid) || {}; const i = statIdx.get(sid);
+    const rs = topInd.filter(r => r.sid === sid); const f = rs.filter(r => r.rk != null);
+    return { sid, w, starts: rs.length, wins: f.filter(r => r.rk === 1).length, pods: f.filter(r => r.rk <= 3).length, t10: f.filter(r => r.rk <= 10).length,
+      sh: statAt(bio.StatShooting, i), pr: statAt(bio.StatShootingProne, i), st: statAt(bio.StatShootingStanding, i), ski: statAt(bio.StatSkiing, i), kmb: statAt(bio.StatSkiKMB, i) };
+  });
+  const champs = [...(bio.OWG || []).map(c => ({ ...c, lvl: "OWG" })), ...(bio.WCH || []).map(c => ({ ...c, lvl: "WCH" }))]
+    .sort((a, b) => String(b.Year).localeCompare(String(a.Year)));
+  const facts = factList(bio);
+  const avail = new Set(seasonIds());
+  const statSeasons = seasons.filter(s => avail.has(s) && topInd.some(r => r.sid === s));
+
+  root.innerHTML = `<div class="stack">
+    <div class="profile">
+      ${bio.PhotoURI ? `<img class="photo" src="${esc(bio.PhotoURI)}" alt="Portrait de ${esc(name)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="photo ph0" aria-hidden="true">${esc(String(name).trim().charAt(0))}</div>`}
+      <div class="head" style="min-width:0"><span class="eyebrow"><a href="#/nation/${esc(nat)}">${flag(nat)} ${esc(natName(nat))}</a> · ${gender === "SW" ? "Femmes" : "Hommes"}</span>
+        <h1>${esc(name)}</h1>
+        ${facts.length ? `<dl class="facts">${facts.map(([k, val]) => `<div class="fact"><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`).join("")}</dl>` : `<p class="lede">Pas d'informations biographiques publiées par l'IBU.</p>`}
+        ${(bio.Badges || []).length ? `<div class="badges">${bio.Badges.map(b => `<span class="badge">${esc(BADGE_FR[b.Description] || b.Description)}${b.Value ? ` <b>${esc(b.Value)}</b>` : ""}</span>`).join("")}</div>` : ""}
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><b>${v("ALL_I_P_G")}</b><span>Victoires individuelles</span></div>
+      <div class="kpi"><b>${v("WC_I_P_G")}</b><span>dont Coupe du monde</span></div>
+      <div class="kpi"><b>${v("ALL_I_P")}</b><span>Podiums individuels</span></div>
+      <div class="kpi"><b>${v("ALL_T_P_G")}</b><span>Victoires en relais</span></div>
+      <div class="kpi"><b>${v("OWG_O_P_G")}·${v("OWG_O_P_S")}·${v("OWG_O_P_B")}</b><span>Médailles JO (or·arg·bronze)</span></div>
+      <div class="kpi"><b>${v("WCH_O_P_G")}·${v("WCH_O_P_S")}·${v("WCH_O_P_B")}</b><span>Médailles Mondiaux</span></div>
+    </div>
+
+    <section class="panel"><div class="ph"><h2>Saison par saison</h2><span class="small muted">Classements Coupe du monde et statistiques officielles IBU</span></div>
+      ${rowsS.length ? `<div class="scroll"><table><thead>
+        <tr><th></th><th class="grp" colspan="5">Classements Coupe du monde</th><th class="grp" colspan="4">Courses individuelles (CdM, Mondiaux, JO)</th><th class="grp" colspan="4">Statistiques IBU</th></tr>
+        <tr><th>Saison</th><th class="num">Général</th><th class="num">Sprint</th><th class="num">Pours.</th><th class="num">Indiv.</th><th class="num">Mass st.</th><th class="num">Départs</th><th class="num">Vict.</th><th class="num">Podiums</th><th class="num">Top 10</th><th class="num">Tir</th><th class="num">Couché</th><th class="num">Debout</th><th class="num" title="Vitesse de ski par rapport à la moyenne des partants">Ski</th></tr></thead><tbody>
+      ${rowsS.map(s => `<tr><td>${statSeasons.includes(s.sid) ? `<button class="chip" data-season="${s.sid}">${seasonLabel(s.sid)}</button>` : `<span class="mono small">${seasonLabel(s.sid)}</span>`}</td>
+        <td class="num mono">${s.w.Tot ? `<b>${esc(s.w.Tot)}</b>${s.w.Tot_Score ? `<div class="sub">${esc(s.w.Tot_Score)} pts</div>` : ""}` : '<span class="muted">·</span>'}</td>
+        ${medalTd(s.w.Spr)}${medalTd(s.w.Pur)}${medalTd(s.w.Ind)}${medalTd(s.w.Mas)}
+        <td class="num mono">${s.starts || ""}</td><td class="num mono">${s.wins || ""}</td><td class="num mono">${s.pods || ""}</td><td class="num mono">${s.t10 || ""}</td>
+        <td class="num mono">${esc(s.sh || "")}</td><td class="num mono">${esc(s.pr || "")}</td><td class="num mono">${esc(s.st || "")}</td><td class="num mono">${esc(s.ski || "")}</td></tr>`).join("")}
+      </tbody></table></div><p class="pb small muted" style="margin:0">Un 1 au général signifie le gros globe de cristal. Ski : écart de vitesse avec la moyenne des partants (négatif = plus rapide), calculé par l'IBU.</p>` : `<div class="pb muted">Aucune saison en Coupe du monde.</div>`}</section>
+
+    ${champs.length ? `<section class="panel"><div class="ph"><h2>Grands championnats</h2><span class="small muted">Rang par épreuve</span></div><div class="scroll"><table><thead><tr><th>Édition</th><th class="num">Sprint</th><th class="num">Pours.</th><th class="num">Indiv.</th><th class="num">Mass st.</th><th class="num">Relais</th><th class="num">Mixte</th><th class="num">Simple mixte</th></tr></thead><tbody>
+      ${champs.map(c => `<tr><td><b>${c.lvl === "OWG" ? "JO" : "Mondiaux"} ${esc(c.Year)}</b>${c.Place ? ` <span class="sub">${esc(c.Place)}</span>` : ""}</td>${medalTd(c.Spr)}${medalTd(c.Pur)}${medalTd(c.Ind)}${medalTd(c.Mas)}${medalTd(c.Rel)}${medalTd(c.MxRel)}${medalTd(c.SxRel)}</tr>`).join("")}
+      </tbody></table></div></section>` : ""}
+
+    <section class="panel" id="stats"><div class="ph"><h2>Détail d'une saison</h2>${statSeasons.length ? `<select id="stat-season" aria-label="Saison analysée">${statSeasons.map(s => `<option value="${s}">${seasonLabel(s)}</option>`).join("")}</select>` : ""}</div>
+      <div class="pb" id="stats-body">${statSeasons.length ? loadingHTML() : `<span class="muted">Aucune saison archivée à analyser.</span>`}</div></section>
+
+    <section class="panel"><div class="ph"><h2>Palmarès</h2><div class="chips" id="palf">
+      <button class="chip on" data-f="pod">Podiums</button><button class="chip" data-f="win">Victoires</button><button class="chip" data-f="med">Médailles</button><button class="chip" data-f="all">Tous les résultats</button></div></div>
+      <div id="palm"></div></section>
+    <p class="small muted">Fiche mise à jour ${esc(ago(doc.fetchedAt))}. Source : IBU.</p>
+  </div>`;
+
+  /* palmarès */
+  const drawPalm = f => {
+    const list = f === "all" ? res : f === "win" ? top.filter(r => r.rk === 1) : f === "med" ? top.filter(r => r.Level !== "WC" && r.rk != null && r.rk <= 3) : top.filter(r => r.rk != null && r.rk <= 3);
+    if (!list.length) { $("#palm", root).innerHTML = `<div class="pb muted">Rien dans cette catégorie.</div>`; return; }
+    const capped = list.slice(0, 500);
+    $("#palm", root).innerHTML = `<div class="scroll"><table><thead><tr><th>Rang</th><th>Saison</th><th>Lieu</th><th>Épreuve</th><th class="hide-sm">Niveau</th><th>Tir</th></tr></thead><tbody>
+      ${capped.map(r => `<tr><td class="rk">${rkCell(r.rk, r.Rank)}</td><td class="mono small">${esc(r.Season || "")}</td><td>${esc(r.Place || "")}${r.PlaceNat ? ` <span class="nat">${flag(r.PlaceNat)}</span>` : ""}</td>
+        <td>${TOP.has(r.Level) && avail.has(r.sid) ? `<a href="#/course/${esc(r.RaceId)}">${esc(DISC[r.Comp] || r.Competition || r.Comp)}</a>` : esc(DISC[r.Comp] || r.Competition || r.Comp || "")}${r.team ? ' <span class="tag">équipe</span>' : ""}<div class="show-sm sub">${esc(levelName(r.Level))}</div></td>
+        <td class="small hide-sm">${esc(levelName(r.Level))}</td><td>${r.team ? "" : targetsHTML(r.Shootings, r.Comp)}</td></tr>`).join("")}
+      </tbody></table></div>${list.length > capped.length ? `<div class="pb small muted">${list.length - capped.length} lignes supplémentaires non affichées.</div>` : ""}`;
+  };
+  root.querySelectorAll("#palf .chip").forEach(b => b.addEventListener("click", () => { root.querySelectorAll("#palf .chip").forEach(x => x.classList.toggle("on", x === b)); drawPalm(b.dataset.f); }));
+  drawPalm("pod");
+
+  /* détail d'une saison */
+  const statSel = $("#stat-season", root);
+  const loadStats = async sid => {
+    const body = $("#stats-body", root);
+    body.innerHTML = loadingHTML("Analyse de la saison");
+    let s = null; try { s = await season(sid); } catch (e) {}
+    const order = new Map(); (s && s.events || []).forEach(e => (e.races || []).forEach(c => order.set(c.RaceId, c.StartTime || "")));
+    const races = topInd.filter(r => r.sid === sid).sort((a, b) => (order.get(a.RaceId) || "").localeCompare(order.get(b.RaceId) || "") || b.i - a.i);
+    const rd = await pool(races, 6, r => race(r.RaceId).catch(() => null));
+    if (statSel.value !== sid) return;
+    let pS = 0, pM = 0, sS = 0, sM = 0;
+    const rows = races.map((r, k) => {
+      const d = rd[k]; const sp = d && d.Competition && d.Competition.ShootingPositions;
+      const me = d ? (d.Results || []).find(x => x.IBUId === id) : null;
+      const st = parseShots(r.Shootings || (me && me.Shootings), r.code, sp);
+      (st || []).forEach(x => { if (x.p === "P") { pS += 5; pM += x.m; } else if (x.p === "S") { sS += 5; sM += x.m; } });
+      const field = d ? (d.Results || []).filter(x => num(x.Rank) != null).length : null;
+      return { r, sp, ski: d && d.Ski ? d.Ski[id] : null, when: order.get(r.RaceId), behind: me ? me.Behind : null, field };
+    });
+    const ranks = rows.filter(x => x.r.rk != null).map(x => x.r.rk), skis = rows.filter(x => x.ski).map(x => x.ski);
+    body.innerHTML = `<div class="stack">
+      <div class="kpis">
+        <div class="kpi"><b>${fmtPct(pct(pS + sS - pM - sM, pS + sS))}</b><span>Réussite au tir · ${pS + sS} balles</span></div>
+        <div class="kpi"><b>${fmtPct(pct(pS - pM, pS))}</b><span>Couché · ${pM} faute${pM > 1 ? "s" : ""}</span></div>
+        <div class="kpi"><b>${fmtPct(pct(sS - sM, sS))}</b><span>Debout · ${sM} faute${sM > 1 ? "s" : ""}</span></div>
+        <div class="kpi"><b>${fmt1(avg(ranks))}</b><span>Rang moyen à l'arrivée</span></div>
+        <div class="kpi"><b>${fmt1(avg(skis))}</b><span>Rang moyen en temps de ski</span></div>
+      </div>
+      ${rankChart(rows.map(x => ({ rk: x.r.rk, label: `${x.r.Place || ""} ${DISC[x.r.Comp] || x.r.Comp}`, short: x.r.Comp })))}
+      <div class="scroll"><table><thead><tr><th>Rang</th><th>Lieu</th><th>Épreuve</th><th>Tir</th><th class="num">Ski</th><th class="num">Écart</th></tr></thead><tbody>
+      ${rows.map(x => `<tr><td class="rk">${rkCell(x.r.rk, x.r.Rank)}</td><td>${esc(x.r.Place || "")}${x.when ? `<div class="sub">${fmtDate(x.when)}</div>` : ""}</td>
+        <td><a href="#/course/${esc(x.r.RaceId)}">${esc(DISC[x.r.Comp] || x.r.Comp)}</a>${x.r.Level !== "WC" ? ` <span class="tag">${x.r.Level === "OWG" ? "JO" : "Mondiaux"}</span>` : ""}</td>
+        <td>${targetsHTML(x.r.Shootings, x.r.Comp, x.sp)}</td><td class="num mono">${x.ski ? x.ski + "e" : "—"}</td><td class="num mono muted">${x.r.rk === 1 ? "" : esc(x.behind && x.behind !== "0.0" ? (String(x.behind).startsWith("+") ? x.behind : "+" + x.behind) : "")}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="small muted" style="margin:0">Tir calculé sur les courses ci-dessus. « Ski » classe le temps de parcours pur (hors pas de tir) parmi les partants de la course.</p></div>`;
+  };
+  if (statSeasons.length) {
+    statSel.addEventListener("change", () => loadStats(statSel.value));
+    root.querySelectorAll("[data-season]").forEach(b => b.addEventListener("click", () => { statSel.value = b.dataset.season; loadStats(b.dataset.season); $("#stats", root).scrollIntoView({ behavior: "smooth", block: "start" }); }));
+    loadStats(statSel.value);
+  }
+}
+
+/* ================================================================ routeur */
+async function route() {
+  clearInterval(liveTimer); liveTimer = null;
+  const root = $("#view");
+  const [page, arg] = location.hash.replace(/^#\/?/, "").split("/");
+  const tab = { nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
+  document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
+  window.scrollTo(0, 0);
+  if (!META) {
+    root.innerHTML = loadingHTML("Chargement");
+    try { await boot(); } catch (e) { root.innerHTML = errorHTML(e instanceof Missing ? new Error("Les données ne sont pas encore générées. Revenez dans quelques minutes.") : e); return; }
+  }
+  const a = decodeURIComponent(arg || "");
+  if (page === "nations") return viewNations(root);
+  if (page === "nation" && a) return viewNation(root, a);
+  if (page === "courses") return viewCourses(root);
+  if (page === "course" && a) return viewRace(root, a);
+  if (page === "recherche") return viewSearch(root);
+  if (page === "athlete" && a) return viewAthlete(root, a);
+  return viewStandings(root);
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

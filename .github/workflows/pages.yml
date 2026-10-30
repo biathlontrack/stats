@@ -1,0 +1,87 @@
+name: Données IBU et publication
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Saison (novembre à mars) : toutes les 30 minutes
+    - cron: "7,37 * * 11,12,1,2,3 *"
+    # Hors saison : une fois par jour
+    - cron: "23 4 * 4-10 *"
+
+permissions:
+  contents: write   # uniquement pour le commit de maintien en activité
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Les données déjà collectées sont conservées d'un passage à l'autre :
+      # seules la saison en cours et les courses non définitives sont retéléchargées.
+      - name: Restaurer les données en cache
+        uses: actions/cache/restore@v4
+        with:
+          path: site/data
+          key: ibu-data-${{ github.run_id }}
+          restore-keys: ibu-data-
+
+      - name: Collecter les données IBU
+        run: python3 scripts/build_data.py --out site/data
+
+      - name: Sauvegarder les données en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: site/data
+          key: ibu-data-${{ github.run_id }}
+
+      - name: Retirer les fichiers internes
+        run: rm -f site/data/_state.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # GitHub suspend les tâches planifiées d'un dépôt public sans commit pendant 60 jours.
+  # Ce job ajoute un commit vide si le dernier date de plus de 45 jours.
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Maintenir les tâches planifiées actives
+        run: |
+          last=$(git log -1 --format=%ct)
+          now=$(date +%s)
+          if [ $(( (now - last) / 86400 )) -ge 45 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898237+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Maintien des tâches planifiées [skip ci]"
+            git push
+          fi
