@@ -212,6 +212,9 @@ a.btn:hover{text-decoration:none}
 .gtag{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
 .ev-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
 .ev-head .pl{font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase}
+.olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
+.olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:6px;font-size:14px;z-index:40}
 @media (max-width:600px){.cal-day{grid-template-columns:1fr;gap:2px}.cal-date{padding-top:0}.cal-race{grid-template-columns:48px 1fr}.cal-race .acts{grid-column:2}.next .when{font-size:34px}}
 </style>
@@ -837,22 +840,46 @@ async function viewCalendar(root) {
   const feedUrl = feedBase + `biathlon-${feedKey}.ics`;
   const webcal = feedUrl.replace(/^https?:/, "webcal:");
   const feedName = `Biathlon ${seasonLabel(sid)}${f.g === "SW" ? " – femmes" : f.g === "SM" ? " – hommes" : ""}`;
+  const olOpen = LS.get("olOpen", false), olKind = LS.get("olKind", "office");
+  const importName = `biathlon-${seasonLabel(sid).replace("/", "-")}${f.g === "SW" ? "-femmes" : f.g === "SM" ? "-hommes" : ""}.ics`;
+  let seasonCount = "", seasonItems = [];
   root.innerHTML = `<div class="stack">
     <div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
       <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}. Ajoutez-les à votre agenda une par une, ou abonnez-vous pour recevoir automatiquement les changements d'horaires.</p></div>
     <div id="next"></div>
-    <section class="panel"><div class="ph"><h2>S'abonner</h2><div class="seg" role="group" aria-label="Courses incluses dans l'abonnement">
+    <section class="panel"><div class="ph"><h2>Ajouter à mon agenda</h2><div class="seg" role="group" aria-label="Courses à ajouter">
         <button data-cg="all" class="${f.g === "all" ? "on" : ""}">Tout</button><button data-cg="SW" class="${f.g === "SW" ? "on" : ""}">Femmes</button><button data-cg="SM" class="${f.g === "SM" ? "on" : ""}">Hommes</button></div></div>
       <div class="pb subs">
-        <div class="row"><a class="btn" href="${esc(outlookSubscribe("live", feedUrl, feedName))}" target="_blank" rel="noopener">Outlook</a><a class="btn ghost" href="${esc(webcal)}">Apple Calendrier</a><a class="btn ghost" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Agenda</a></div>
-        <p class="small" style="margin:0">Compte Outlook professionnel ou scolaire ? <a href="${esc(outlookSubscribe("office", feedUrl, feedName))}" target="_blank" rel="noopener">S'abonner avec Microsoft 365</a></p>
+        <div class="row"><button class="btn" id="ol-toggle" type="button" aria-expanded="${olOpen}" aria-controls="ol-panel">Outlook</button><a class="btn ghost" href="${esc(webcal)}">Apple Calendrier</a><a class="btn ghost" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Agenda</a></div>
+        <div class="olp" id="ol-panel"${olOpen ? "" : " hidden"}>
+          <div class="row"><span class="small">Votre compte :</span><div class="seg" role="group" aria-label="Type de compte Outlook">
+            <button data-ol="office" class="${olKind === "office" ? "on" : ""}" type="button">Microsoft 365</button><button data-ol="live" class="${olKind === "live" ? "on" : ""}" type="button">Outlook.com · Hotmail</button></div></div>
+          <div class="olstep"><b>Importer toute la saison maintenant</b>
+            <p class="small" style="margin:4px 0 10px">Les ${seasonCount} courses arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.</p>
+            <button class="btn" id="ol-import" type="button">Télécharger la saison et ouvrir Outlook</button>
+            <ol class="small steps"><li>Dans Outlook, cliquez sur <b>Ajouter un calendrier</b> (sous le petit calendrier, à gauche).</li><li>Choisissez <b>Charger à partir d'un fichier</b>, puis le fichier <b>${esc(importName)}</b> qui vient d'être téléchargé.</li><li>Choisissez votre calendrier, puis <b>Importer</b>.</li></ol></div>
+          <div class="olstep"><b>Ou s'abonner</b>
+            <p class="small" style="margin:4px 0 10px">Les horaires se mettent à jour tout seuls, mais Outlook peut mettre plus de 24 heures à remplir un calendrier abonné. Si vous importez la saison, supprimez l'abonnement vide pour éviter les doublons.</p>
+            <a class="btn ghost sm" href="${esc(outlookSubscribe(olKind, feedUrl, feedName))}" target="_blank" rel="noopener">S'abonner dans Outlook</a></div>
+        </div>
         <div class="row"><code id="feed-url">${esc(feedUrl)}</code><button class="btn ghost sm" id="copy-feed" type="button">Copier le lien</button></div>
-        <p class="small muted" style="margin:0">${f.g === "all" ? "Toutes les courses" : f.g === "SW" ? "Courses femmes et relais mixtes" : "Courses hommes et relais mixtes"}. Le bouton Outlook ouvre Outlook sur le web, connecté à votre compte Microsoft : une fois l'abonnement validé, il apparaît aussi dans l'application Outlook sur ordinateur et sur téléphone. L'agenda se met à jour tout seul si l'IBU modifie un horaire.</p>
+        <p class="small muted" style="margin:0">${f.g === "all" ? "Toutes les courses" : f.g === "SW" ? "Courses femmes et relais mixtes" : "Courses hommes et relais mixtes"}. Apple Calendrier et Google Agenda s'abonnent au calendrier, qui se met à jour tout seul si l'IBU modifie un horaire.</p>
       </div></section>
     <div class="controls" id="filters"></div>
     <div id="out">${loadingHTML()}</div></div>`;
   root.querySelectorAll("[data-cg]").forEach(b => b.addEventListener("click", () => { LS.set("cal", { ...f, g: b.dataset.cg }); render(); }));
   $("#copy-feed", root).addEventListener("click", () => copyText(feedUrl, $("#feed-url", root)));
+  $("#ol-toggle", root).addEventListener("click", ev => {
+    const p = $("#ol-panel", root); p.hidden = !p.hidden; ev.currentTarget.setAttribute("aria-expanded", String(!p.hidden)); LS.set("olOpen", !p.hidden);
+  });
+  root.querySelectorAll("[data-ol]").forEach(b => b.addEventListener("click", () => { LS.set("olKind", b.dataset.ol); LS.set("olOpen", true); render(); }));
+  $("#ol-import", root).addEventListener("click", () => {
+    if (!seasonItems.length) { toast("Le calendrier est encore en cours de chargement"); return; }
+    // Ouvrir Outlook d'abord, dans le geste de l'utilisateur, pour ne pas être bloqué par le navigateur.
+    window.open(OUTLOOK_HOST[olKind] + "/calendar/view/month", "_blank", "noopener");
+    downloadText(importName, icsDoc(feedName, seasonItems, true));
+    toast(`${seasonItems.length} courses téléchargées : importez le fichier dans Outlook`);
+  });
 
   let s;
   try { s = await season(sid); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
@@ -860,6 +887,10 @@ async function viewCalendar(root) {
   (s.events || []).forEach(e => (e.races || []).forEach(r => { if (r.StartTime) all.push({ r, e, d: new Date(r.StartTime) }); }));
   all.sort((a, b) => a.d - b.d);
   if (!all.length) { $("#out", root).innerHTML = `<div class="note">Le calendrier ${seasonLabel(sid)} n'est pas encore publié par l'IBU.</div>`; return; }
+  seasonItems = all.filter(x => f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX");
+  seasonCount = String(seasonItems.length);
+  const btn = $("#ol-import", root); if (btn) btn.textContent = `Télécharger les ${seasonItems.length} courses et ouvrir Outlook`;
+  const p = $("#ol-panel p.small", root); if (p) p.textContent = `Les ${seasonItems.length} courses de la saison arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.`;
   const discs = [...new Set(all.map(x => raceDisc(x.r)))].sort((a, b) => ["SP","PU","IN","SI","MS","RL","SR","SS"].indexOf(a) - ["SP","PU","IN","SI","MS","RL","SR","SS"].indexOf(b));
   const now = Date.now();
   const keep = x => (f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX") && (!f.disc.length || f.disc.includes(raceDisc(x.r))) && (!f.hidePast || x.d.getTime() + 2 * 3600e3 > now);
