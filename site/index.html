@@ -282,6 +282,45 @@ tr.picked td{background:var(--accent-soft)}
 a.btn.disabled{opacity:.5}
 tr.stage-row td{vertical-align:top}
 tr.stage-row .stage{justify-content:flex-end}
+.cal-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cal-filters #jump-agenda{margin-left:auto}
+#list-panel>.pb{padding-top:12px}
+#list-panel .events{gap:12px}
+.month-head{align-items:center;justify-content:flex-start}
+.month-head h2{min-width:9ch;text-align:center}
+.month-head .month-count{margin-right:auto}
+.mlegend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.g-bg-SW{background:#B4236B}.g-bg-SM{background:var(--accent)}.g-bg-MX{background:var(--good)}
+:root[data-theme="dark"] .g-bg-SW{background:#F07AB4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-bg-SW{background:#F07AB4}}
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mwd{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;padding:4px 0}
+.mday{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:3px;min-height:96px;min-width:0;padding:6px;border:1px solid var(--line-soft);border-radius:6px;background:var(--paper);cursor:pointer}
+.mday.out{border:0;background:transparent;cursor:default;min-height:0}
+.mday:hover{border-color:var(--line)}
+.mday:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.mday.has{background:var(--snow)}
+.mday.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.mday.past .mps{opacity:.55}
+.mday .dn{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.mday.has .dn{color:var(--ink);font-weight:500}
+.mday.today .dn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--bib);color:var(--bib-ink);font-weight:600}
+.mev{font-family:var(--display);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mps{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mp{display:block;min-width:0;border-left:3px solid currentColor;background:var(--line-soft);border-radius:3px;padding:1px 4px}
+.mpt{display:block;font-size:11px;font-family:var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dday{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.dd-head{font-size:15px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.dd-head b{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.02em}
+@media (max-width:760px){.mlegend{display:none}}
+@media (max-width:600px){
+  .mgrid{gap:2px}.mday{min-height:54px;padding:4px 3px;align-items:center}
+  .mev{display:none}
+  .mps{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:3px}
+  .mp{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:currentColor}
+  .mpt{display:none}
+  .cal-filters #jump-agenda{margin-left:0}
+}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -1397,6 +1436,11 @@ function countdown(d) {
   return [h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`, "avant le départ"];
 }
 
+const DISC_SHORT = {SP:"Sprint",PU:"Pours.",IN:"Indiv.",SI:"Ind. court",MS:"Mass st.",RL:"Relais",SR:"Rel. simple",SS:"Sup. sprint"};
+const CAT_SHORT = {SW:"F",SM:"H",MX:"Mixte"};
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const ym = d => ymd(d).slice(0, 7);
+
 async function viewCalendar(root) {
   const render = () => viewCalendar(root);
   const sid = META.currentSeason && seasonIds().includes(META.currentSeason) ? META.currentSeason : seasonIds()[0];
@@ -1409,20 +1453,29 @@ async function viewCalendar(root) {
   const feedName = `Biathlon ${seasonLabel(sid)}${f.g === "SW" ? " – femmes" : f.g === "SM" ? " – hommes" : ""}`;
   const olOpen = LS.get("olOpen", false), olKind = LS.get("olKind", "office");
   const importName = `biathlon-${seasonLabel(sid).replace("/", "-")}${f.g === "SW" ? "-femmes" : f.g === "SM" ? "-hommes" : ""}.ics`;
-  let seasonCount = "", seasonItems = [];
+  const scope = f.g === "all" ? "toutes les courses" : f.g === "SW" ? "les courses femmes et les relais mixtes" : "les courses hommes et les relais mixtes";
   root.innerHTML = `<div class="stack">
     <div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
-      <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}. Ajoutez-les à votre agenda une par une, ou abonnez-vous pour recevoir automatiquement les changements d'horaires.</p></div>
+      <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}.</p></div>
     <div id="next"></div>
-    <section class="panel"><div class="ph"><h2>Ajouter à mon agenda</h2><div class="seg" role="group" aria-label="Courses à ajouter">
-        <button data-cg="all" class="${f.g === "all" ? "on" : ""}">Tout</button><button data-cg="SW" class="${f.g === "SW" ? "on" : ""}">Femmes</button><button data-cg="SM" class="${f.g === "SM" ? "on" : ""}">Hommes</button></div></div>
+    <div class="cal-filters" id="filters">
+      <div class="seg" role="group" aria-label="Catégorie"><button data-cg="all" class="${f.g === "all" ? "on" : ""}">Tout</button><button data-cg="SW" class="${f.g === "SW" ? "on" : ""}">Femmes</button><button data-cg="SM" class="${f.g === "SM" ? "on" : ""}">Hommes</button></div>
+      <div class="chips" id="disc-chips" role="group" aria-label="Épreuves"></div>
+      <button class="btn ghost sm" id="jump-agenda" type="button">Ajouter à mon agenda ↓</button>
+    </div>
+    <section class="panel" id="month-panel"><div class="pb">${loadingHTML()}</div></section>
+    <section class="panel" id="list-panel"><div class="ph"><h2>Toutes les courses</h2>
+      <label class="small"><input type="checkbox" id="hide-past"${f.hidePast ? " checked" : ""}> Masquer les courses passées</label></div>
+      <div id="out" class="pb">${loadingHTML()}</div></section>
+
+    <section class="panel" id="agenda"><div class="ph"><h2>Ajouter à mon agenda</h2><span class="small muted">Selon le filtre choisi : ${esc(scope)}</span></div>
       <div class="pb subs">
         <div class="row"><button class="btn" id="ol-toggle" type="button" aria-expanded="${olOpen}" aria-controls="ol-panel">Outlook</button><a class="btn ghost" href="${esc(webcal)}">Apple Calendrier</a><a class="btn ghost" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Agenda</a></div>
         <div class="olp" id="ol-panel"${olOpen ? "" : " hidden"}>
           <div class="row"><span class="small">Votre compte :</span><div class="seg" role="group" aria-label="Type de compte Outlook">
             <button data-ol="office" class="${olKind === "office" ? "on" : ""}" type="button">Microsoft 365</button><button data-ol="live" class="${olKind === "live" ? "on" : ""}" type="button">Outlook.com · Hotmail</button></div></div>
           <div class="olstep"><b>Importer toute la saison maintenant</b>
-            <p class="small" style="margin:4px 0 10px">Les ${seasonCount} courses arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.</p>
+            <p class="small" id="ol-count" style="margin:4px 0 10px">Les courses de la saison arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.</p>
             <button class="btn" id="ol-import" type="button">Télécharger la saison et ouvrir Outlook</button>
             <ol class="small steps"><li>Dans Outlook, cliquez sur <b>Ajouter un calendrier</b> (sous le petit calendrier, à gauche).</li><li>Choisissez <b>Charger à partir d'un fichier</b>, puis le fichier <b>${esc(importName)}</b> qui vient d'être téléchargé.</li><li>Choisissez votre calendrier, puis <b>Importer</b>.</li></ol></div>
           <div class="olstep"><b>Ou s'abonner</b>
@@ -1430,74 +1483,141 @@ async function viewCalendar(root) {
             <a class="btn ghost sm" href="${esc(outlookSubscribe(olKind, feedUrl, feedName))}" target="_blank" rel="noopener">S'abonner dans Outlook</a></div>
         </div>
         <div class="row"><code id="feed-url">${esc(feedUrl)}</code><button class="btn ghost sm" id="copy-feed" type="button">Copier le lien</button></div>
-        <p class="small muted" style="margin:0">${f.g === "all" ? "Toutes les courses" : f.g === "SW" ? "Courses femmes et relais mixtes" : "Courses hommes et relais mixtes"}. Apple Calendrier et Google Agenda s'abonnent au calendrier, qui se met à jour tout seul si l'IBU modifie un horaire.</p>
-      </div></section>
-    <div class="controls" id="filters"></div>
-    <div id="out">${loadingHTML()}</div></div>`;
+        <p class="small muted" style="margin:0">Apple Calendrier et Google Agenda s'abonnent au calendrier, qui se met à jour tout seul si l'IBU modifie un horaire.</p>
+        <div class="row"><button class="btn ghost sm" id="dl-sel" type="button" disabled>Télécharger la sélection (.ics)</button><span class="small muted">Les courses affichées dans la liste, avec les filtres d'épreuves.</span></div>
+      </div></section></div>`;
+
   root.querySelectorAll("[data-cg]").forEach(b => b.addEventListener("click", () => { LS.set("cal", { ...f, g: b.dataset.cg }); render(); }));
+  $("#jump-agenda", root).addEventListener("click", () => $("#agenda", root).scrollIntoView({ behavior: "smooth", block: "start" }));
+  $("#hide-past", root).addEventListener("change", ev => { LS.set("cal", { ...f, hidePast: ev.target.checked }); render(); });
   $("#copy-feed", root).addEventListener("click", () => copyText(feedUrl, $("#feed-url", root)));
   $("#ol-toggle", root).addEventListener("click", ev => {
     const p = $("#ol-panel", root); p.hidden = !p.hidden; ev.currentTarget.setAttribute("aria-expanded", String(!p.hidden)); LS.set("olOpen", !p.hidden);
   });
   root.querySelectorAll("[data-ol]").forEach(b => b.addEventListener("click", () => { LS.set("olKind", b.dataset.ol); LS.set("olOpen", true); render(); }));
-  $("#ol-import", root).addEventListener("click", () => {
-    if (!seasonItems.length) { toast("Le calendrier est encore en cours de chargement"); return; }
-    // Ouvrir Outlook d'abord, dans le geste de l'utilisateur, pour ne pas être bloqué par le navigateur.
-    window.open(OUTLOOK_HOST[olKind] + "/calendar/view/month", "_blank", "noopener");
-    downloadText(importName, icsDoc(feedName, seasonItems, true));
-    toast(`${seasonItems.length} courses téléchargées : importez le fichier dans Outlook`);
-  });
 
   let s;
-  try { s = await season(sid); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
+  try { s = await season(sid); } catch (e) { $("#out", root).innerHTML = errorHTML(e); $("#month-panel", root).hidden = true; return; }
   const all = [];
   (s.events || []).forEach(e => (e.races || []).forEach(r => { if (r.StartTime) all.push({ r, e, d: new Date(r.StartTime) }); }));
   all.sort((a, b) => a.d - b.d);
-  if (!all.length) { $("#out", root).innerHTML = `<div class="note">Le calendrier ${seasonLabel(sid)} n'est pas encore publié par l'IBU.</div>`; return; }
-  seasonItems = all.filter(x => f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX");
-  seasonCount = String(seasonItems.length);
-  const btn = $("#ol-import", root); if (btn) btn.textContent = `Télécharger les ${seasonItems.length} courses et ouvrir Outlook`;
-  const p = $("#ol-panel p.small", root); if (p) p.textContent = `Les ${seasonItems.length} courses de la saison arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.`;
-  const discs = [...new Set(all.map(x => raceDisc(x.r)))].sort((a, b) => ["SP","PU","IN","SI","MS","RL","SR","SS"].indexOf(a) - ["SP","PU","IN","SI","MS","RL","SR","SS"].indexOf(b));
-  const now = Date.now();
-  const keep = x => (f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX") && (!f.disc.length || f.disc.includes(raceDisc(x.r))) && (!f.hidePast || x.d.getTime() + 2 * 3600e3 > now);
-  const list = all.filter(keep);
+  if (!all.length) { $("#month-panel", root).hidden = true; $("#out", root).innerHTML = `<div class="note">Le calendrier ${seasonLabel(sid)} n'est pas encore publié par l'IBU.</div>`; return; }
 
-  $("#filters", root).innerHTML = `<div class="chips" role="group" aria-label="Épreuves">${discs.map(d => `<button class="chip${f.disc.includes(d) ? " on" : ""}" data-d="${d}">${esc(DISC_FR[d] || d)}</button>`).join("")}</div>
-    <label class="small"><input type="checkbox" id="hide-past"${f.hidePast ? " checked" : ""}> Masquer les courses passées</label>
-    <button class="btn ghost sm" id="dl-sel" type="button"${list.length ? "" : " disabled"}>Télécharger ces ${list.length} courses (.ics)</button>`;
+  const now = Date.now();
+  const isPast = x => x.d.getTime() + 2 * 3600e3 < now;
+  const inCat = x => f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX";
+  const inDisc = x => !f.disc.length || f.disc.includes(raceDisc(x.r));
+  const seasonItems = all.filter(inCat);
+  const shown = all.filter(x => inCat(x) && inDisc(x));            // calendrier mensuel : passé compris
+  const list = shown.filter(x => !f.hidePast || !isPast(x));        // liste
+  const icsHref = r => "data/calendar/races/" + encodeURIComponent(r.RaceId) + ".ics";
+  const actions = x => `<span class="acts"><a class="btn ghost sm" href="${icsHref(x.r)}" aria-label="Ajouter ${esc(raceTitle(x.r))} à mon agenda">Agenda</a><a class="btn ghost sm" href="${esc(outlookEventLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Outlook">Outlook</a><a class="btn ghost sm" href="${esc(googleLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Google Agenda">Google</a></span>`;
+  const raceRow = x => `<div class="cal-race${isPast(x) ? " past" : ""}">
+    <span class="t">${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }))}</span>
+    <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc(CAT_SHORT[raceCat(x.r)] || "")}</span></span>${actions(x)}</div>`;
+
+  /* Filtres d'épreuves */
+  const ORDER = ["SP","PU","IN","SI","MS","RL","SR","SS"];
+  const discs = [...new Set(all.map(x => raceDisc(x.r)))].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+  $("#disc-chips", root).innerHTML = discs.map(d => `<button class="chip${f.disc.includes(d) ? " on" : ""}" data-d="${d}">${esc(DISC_FR[d] || d)}</button>`).join("");
   root.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
     const d = b.dataset.d; const disc = f.disc.includes(d) ? f.disc.filter(x => x !== d) : [...f.disc, d]; LS.set("cal", { ...f, disc }); render(); }));
-  $("#hide-past", root).addEventListener("change", ev => { LS.set("cal", { ...f, hidePast: ev.target.checked }); render(); });
-  $("#dl-sel", root).addEventListener("click", () => {
-    downloadText(`biathlon-${sid}-selection.ics`, icsDoc(`Biathlon ${seasonLabel(sid)}`, list, true));
-    toast("Fichier téléchargé : ouvrez-le pour ajouter les courses à votre agenda");
-  });
 
-  const nx = all.filter(x => (f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX") && x.d.getTime() + 2 * 3600e3 > now)[0];
+  /* Prochaine course */
+  const nx = seasonItems.find(x => !isPast(x));
   if (nx) {
     const [big, small] = countdown(nx.d);
     $("#next", root).innerHTML = `<div class="next"><div class="when">${esc(big)}<small>${esc(small)}</small></div>
       <div class="what"><span>Prochaine course</span><b>${esc(raceTitle(nx.r))}</b><span>${esc(nx.e.ShortDescription || "")} · ${esc(fmtDateTime(nx.r.StartTime))}</span></div></div>`;
   }
 
+  /* Calendrier mensuel */
+  const months = [...new Set(all.map(x => ym(x.d)))].sort();
+  const byDay = new Map(); shown.forEach(x => { const k = ymd(x.d); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(x); });
+  const firstDayOfEvent = new Map(); all.forEach(x => { const k = ymd(new Date(x.e.StartDate)); const first = ymd(x.d);
+    if (!firstDayOfEvent.has(x.e.EventId) || first < firstDayOfEvent.get(x.e.EventId)) firstDayOfEvent.set(x.e.EventId, first); });
+  const eventStartsOn = new Map(); firstDayOfEvent.forEach((k, eid) => { const e = all.find(x => x.e.EventId === eid).e; eventStartsOn.set(k, e); });
+  const saved = LS.get("calMonth", null);
+  const todayYm = ym(new Date());
+  let month = months.includes(saved) ? saved : nx && months.includes(ym(nx.d)) ? ym(nx.d) : months.includes(todayYm) ? todayYm : months[0];
+  let selected = null;
+  const todayK = ymd(new Date());
+  const WEEK = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."];
+  const dayDetail = k => {
+    const items = byDay.get(k) || [];
+    const d = new Date(k + "T12:00:00");
+    const ev = items[0] && items[0].e;
+    return `<div class="dd-head"><b>${esc(d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }))}</b>${ev ? ` <span class="muted">· ${esc(ev.ShortDescription || "")}</span> ${natHTML(ev.Nat)}${eventKind(ev.EventId) !== "Coupe du monde" ? ` <span class="tag live">${esc(eventKind(ev.EventId))}</span>` : ""}` : ""}</div>
+      ${items.length ? `<div class="cal-races">${items.map(raceRow).join("")}</div>` : `<p class="muted small" style="margin:6px 0 0">Pas de course ce jour-là${f.disc.length || f.g !== "all" ? " avec les filtres choisis" : ""}.</p>`}`;
+  };
+  const drawMonth = () => {
+    LS.set("calMonth", month);
+    const [y, m] = month.split("-").map(Number);
+    const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+    const offset = (first.getDay() + 6) % 7, cells = Math.ceil((offset + days) / 7) * 7;
+    const inMonth = [...byDay.keys()].filter(k => k.startsWith(month)).sort();
+    if (!selected || !selected.startsWith(month)) {
+      const upcoming = inMonth.find(k => (byDay.get(k) || []).some(x => !isPast(x)));
+      selected = upcoming || inMonth[0] || null;
+    }
+    const mi = months.indexOf(month);
+    const title = first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    const nRaces = inMonth.reduce((a, k) => a + byDay.get(k).length, 0);
+    let grid = "";
+    for (let c = 0; c < cells; c++) {
+      const dn = c - offset + 1;
+      if (dn < 1 || dn > days) { grid += `<div class="mday out" aria-hidden="true"></div>`; continue; }
+      const k = `${month}-${String(dn).padStart(2, "0")}`;
+      const items = byDay.get(k) || [];
+      const ev = eventStartsOn.get(k);
+      const label = `${dn} ${first.toLocaleDateString("fr-FR", { month: "long" })}${items.length ? ` : ${items.length} course${items.length > 1 ? "s" : ""}` : ""}`;
+      grid += `<button type="button" class="mday${items.length ? " has" : ""}${k === todayK ? " today" : ""}${k === selected ? " sel" : ""}${items.length && items.every(isPast) ? " past" : ""}" data-k="${k}" aria-label="${esc(label)}" aria-pressed="${k === selected}">
+        <span class="dn">${dn}</span>${ev ? `<span class="mev">${esc(ev.ShortDescription || "")}</span>` : ""}
+        <span class="mps">${items.map(x => `<span class="mp g-${raceCat(x.r)}" title="${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " " + raceTitle(x.r))}"><span class="mpt">${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }))} ${esc(DISC_SHORT[raceDisc(x.r)] || raceDisc(x.r))} ${esc(CAT_SHORT[raceCat(x.r)] || "")}</span></span>`).join("")}</span></button>`;
+    }
+    $("#month-panel", root).innerHTML = `<div class="ph month-head">
+        <button class="btn ghost sm" id="m-prev" type="button" aria-label="Mois précédent"${mi <= 0 ? " disabled" : ""}>‹</button>
+        <h2 aria-live="polite">${esc(title.charAt(0).toUpperCase() + title.slice(1))}</h2>
+        <button class="btn ghost sm" id="m-next" type="button" aria-label="Mois suivant"${mi >= months.length - 1 ? " disabled" : ""}>›</button>
+        <span class="small muted month-count">${nRaces} course${nRaces > 1 ? "s" : ""}</span>
+        <span class="legend mlegend"><span><i class="g-bg-SW"></i>Femmes</span><span><i class="g-bg-SM"></i>Hommes</span><span><i class="g-bg-MX"></i>Mixte</span></span></div>
+      <div class="pb"><div class="mgrid" role="group" aria-label="Jours du mois">${WEEK.map(w => `<div class="mwd">${w}</div>`).join("")}${grid}</div>
+      <div class="dday" id="dday">${selected ? dayDetail(selected) : `<p class="muted small" style="margin:0">Aucune course ce mois-ci.</p>`}</div></div>`;
+    $("#m-prev", root).addEventListener("click", () => { month = months[Math.max(0, mi - 1)]; selected = null; drawMonth(); });
+    $("#m-next", root).addEventListener("click", () => { month = months[Math.min(months.length - 1, mi + 1)]; selected = null; drawMonth(); });
+    root.querySelectorAll(".mday[data-k]").forEach(b => b.addEventListener("click", () => {
+      selected = b.dataset.k;
+      root.querySelectorAll(".mday[data-k]").forEach(x => { const on = x === b; x.classList.toggle("sel", on); x.setAttribute("aria-pressed", String(on)); });
+      $("#dday", root).innerHTML = dayDetail(selected);
+    }));
+  };
+  drawMonth();
+
+  /* Liste complète */
+  const dl = $("#dl-sel", root);
+  dl.disabled = !list.length; dl.textContent = `Télécharger la sélection : ${list.length} course${list.length > 1 ? "s" : ""} (.ics)`;
+  dl.addEventListener("click", () => { downloadText(`biathlon-${sid}-selection.ics`, icsDoc(`Biathlon ${seasonLabel(sid)}`, list, true)); toast("Fichier téléchargé : ouvrez-le pour ajouter les courses à votre agenda"); });
+  const olBtn = $("#ol-import", root); olBtn.textContent = `Télécharger les ${seasonItems.length} courses et ouvrir Outlook`;
+  $("#ol-count", root).textContent = `Les ${seasonItems.length} courses de la saison arrivent dans votre agenda en une fois, avec un rappel 30 minutes avant chaque départ.`;
+  olBtn.addEventListener("click", () => {
+    // Ouvrir Outlook d'abord, dans le geste de l'utilisateur, pour ne pas être bloqué par le navigateur.
+    window.open(OUTLOOK_HOST[olKind] + "/calendar/view/month", "_blank", "noopener");
+    downloadText(importName, icsDoc(feedName, seasonItems, true));
+    toast(`${seasonItems.length} courses téléchargées : importez le fichier dans Outlook`);
+  });
+
   if (!list.length) { $("#out", root).innerHTML = `<div class="note">Aucune course ne correspond aux filtres.</div>`; return; }
-  const dayKey = d => d.toLocaleDateString("fr-FR", { year: "numeric", month: "2-digit", day: "2-digit" });
+  const dayKey = d => ymd(d);
   const groups = [];
   list.forEach(x => { let g = groups.find(g => g.e.EventId === x.e.EventId); if (!g) groups.push(g = { e: x.e, days: [] });
     let day = g.days.find(d => d.k === dayKey(x.d)); if (!day) g.days.push(day = { k: dayKey(x.d), d: x.d, items: [] }); day.items.push(x); });
-  const icsHref = r => "data/calendar/races/" + encodeURIComponent(r.RaceId) + ".ics";
   $("#out", root).innerHTML = `<div class="events">${groups.map(g => `<section class="ev">
       <div class="ev-head"><span><span class="pl">${esc(g.e.ShortDescription || g.e.Organizer || "")}</span> ${natHTML(g.e.Nat)}${eventKind(g.e.EventId) !== "Coupe du monde" ? ` <span class="tag live">${esc(eventKind(g.e.EventId))}</span>` : ""}</span>
         <span class="small muted">${fmtDate(g.e.StartDate)} – ${fmtDate(g.e.EndDate)}</span></div>
       ${g.days.map(day => `<div class="cal-day"><div class="cal-date">${esc(day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }))}<small>${esc(day.d.toLocaleDateString("fr-FR", { month: "long" }))}</small></div>
-        <div class="cal-races">${day.items.map(x => `<div class="cal-race${x.d.getTime() + 2 * 3600e3 < now ? " past" : ""}">
-          <span class="t">${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }))}</span>
-          <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc({ SW: "F", SM: "H", MX: "Mixte" }[raceCat(x.r)] || "")}</span></span>
-          <span class="acts"><a class="btn ghost sm" href="${icsHref(x.r)}" aria-label="Ajouter ${esc(raceTitle(x.r))} à mon agenda">Agenda</a><a class="btn ghost sm" href="${esc(outlookEventLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Outlook">Outlook</a><a class="btn ghost sm" href="${esc(googleLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Google Agenda">Google</a></span>
-        </div>`).join("")}</div></div>`).join("")}
+        <div class="cal-races">${day.items.map(raceRow).join("")}</div></div>`).join("")}
     </section>`).join("")}</div>
-    <p class="small muted">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
+    <p class="small muted" style="margin:12px 0 0">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
 }
 
 /* ================================================================ routeur */
