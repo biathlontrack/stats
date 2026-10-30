@@ -40,6 +40,8 @@ jobs:
           restore-keys: ibu-data-
 
       - name: Collecter les données IBU
+        env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: python3 scripts/build_data.py --out site/data
 
       - name: Sauvegarder les données en cache

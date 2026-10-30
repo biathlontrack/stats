@@ -326,7 +326,13 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
                 a[2] = "SW" if bio["GenderId"] == "W" else "SM"
     write_json(state_path, state)
 
-    # 3. Index et méta
+    # 3. Calendriers (.ics) de la saison en cours
+    try:
+        write_calendars(out, cur or cur_res)
+    except Exception as e:  # noqa: BLE001 — un calendrier raté ne doit pas bloquer la publication
+        print(f"  ! calendriers : {e}", file=sys.stderr)
+
+    # 4. Index et méta
     index = sorted(([ibu, *v] for ibu, v in all_athletes.items()), key=lambda r: r[1])
     write_json(os.path.join(out, "athletes.json"), index)
     meta = {
@@ -343,6 +349,124 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
     write_json(os.path.join(out, "meta.json"), meta)
     print(json.dumps(meta, ensure_ascii=False))
     return meta
+
+
+# --------------------------------------------------------------------------- calendriers iCalendar
+SITE_URL = os.environ.get("SITE_URL", "").rstrip("/") + "/" if os.environ.get("SITE_URL") else ""
+DISC_FR = {"SP": "Sprint", "PU": "Poursuite", "IN": "Individuel", "SI": "Individuel court", "MS": "Mass start",
+           "RL": "Relais", "SR": "Relais simple mixte", "SS": "Super sprint"}
+DURATION_MIN = {"SP": 45, "PU": 45, "IN": 60, "SI": 50, "MS": 45, "RL": 80, "SR": 45, "SS": 30}
+GENDER_FR = {"SW": "femmes", "SM": "hommes", "MX": "mixte"}
+
+
+def race_title(r):
+    rid = r.get("RaceId", "")
+    disc = r.get("DisciplineId") or rid[-2:]
+    cat = r.get("catId") or rid[-4:-2]
+    name = DISC_FR.get(disc, r.get("ShortDescription") or disc)
+    if disc != "SR":
+        name += " " + GENDER_FR.get(cat, "")
+    km = str(r.get("km") or "").strip()
+    if km and km not in ("None", "0"):
+        name += " " + km.replace("x", "×").replace(".", ",") + " km"
+    return name.strip()
+
+
+def event_kind(eid):
+    return "JO" if "RLOG" in eid else "Mondiaux" if "RLCH" in eid else "Coupe du monde"
+
+
+def ics_escape(s):
+    return str(s or "").replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def ics_fold(line):
+    raw = line.encode("utf-8")
+    if len(raw) <= 75:
+        return line
+    parts, cur = [], b""
+    for ch in line:
+        b = ch.encode("utf-8")
+        if len(cur) + len(b) > (75 if not parts else 74):
+            parts.append(cur.decode("utf-8"))
+            cur = b""
+        cur += b
+    parts.append(cur.decode("utf-8"))
+    return "\r\n ".join(parts)
+
+
+def ics_vevent(r, e, stamp, alarm=False):
+    start = parse_time(r.get("StartTime"))
+    if not start:
+        return []
+    disc = r.get("DisciplineId") or r["RaceId"][-2:]
+    end = start + dt.timedelta(minutes=DURATION_MIN.get(disc, 60))
+    place = e.get("ShortDescription") or e.get("Organizer") or ""
+    kind = event_kind(e.get("EventId", ""))
+    loc = ", ".join(x for x in (r.get("Location"), place, e.get("NatLong") or e.get("Nat")) if x)
+    url = f"{SITE_URL}#/course/{r['RaceId']}" if SITE_URL else ""
+    desc = f"{kind} de biathlon – {place}"
+    if url:
+        desc += f"\nRésultats : {url}"
+    desc += "\nDirect officiel : https://www.biathlonresults.com/"
+    status = "CANCELLED" if str(r.get("ScheduleStatus", "")).upper() == "CANCELLED" else "CONFIRMED"
+    lines = ["BEGIN:VEVENT", f"UID:{r['RaceId']}@biathlon-datacenter", f"DTSTAMP:{stamp}",
+             f"DTSTART:{start.strftime('%Y%m%dT%H%M%SZ')}", f"DTEND:{end.strftime('%Y%m%dT%H%M%SZ')}",
+             f"SUMMARY:{ics_escape('Biathlon – ' + race_title(r) + ' (' + place + ')')}",
+             f"LOCATION:{ics_escape(loc)}", f"DESCRIPTION:{ics_escape(desc)}",
+             f"CATEGORIES:{ics_escape('Biathlon,' + kind)}", f"STATUS:{status}", "TRANSP:TRANSPARENT"]
+    if url:
+        lines.append(f"URL:{url}")
+    if alarm:
+        lines += ["BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:-PT30M",
+                  f"DESCRIPTION:{ics_escape(race_title(r) + ' dans 30 minutes')}", "END:VALARM"]
+    lines.append("END:VEVENT")
+    return lines
+
+
+def ics_document(name, vevents, feed=False):
+    head = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Biathlon Datacenter//Calendrier IBU//FR",
+            "CALSCALE:GREGORIAN", "METHOD:PUBLISH", f"X-WR-CALNAME:{ics_escape(name)}",
+            "X-WR-CALDESC:Courses de biathlon (Coupe du monde\\, Mondiaux\\, JO) – données IBU"]
+    if feed:
+        head += ["REFRESH-INTERVAL;VALUE=DURATION:PT6H", "X-PUBLISHED-TTL:PT6H"]
+    return "\r\n".join(ics_fold(x) for x in head + vevents + ["END:VCALENDAR"]) + "\r\n"
+
+
+def write_calendars(out, sid):
+    season = read_json(os.path.join(out, "seasons", f"{sid}.json"))
+    if not season:
+        return
+    stamp = now_utc().strftime("%Y%m%dT%H%M%SZ")
+    cal_dir = os.path.join(out, "calendar")
+    race_dir = os.path.join(cal_dir, "races")
+    os.makedirs(race_dir, exist_ok=True)
+    label = seasonLabel(sid)
+    feeds = {"tout": ([], f"Biathlon {label}"), "femmes": ([], f"Biathlon {label} – femmes"),
+             "hommes": ([], f"Biathlon {label} – hommes")}
+    n = 0
+    for e in season.get("events", []):
+        for r in e.get("races", []):
+            ev = ics_vevent(r, e, stamp)
+            if not ev:
+                continue
+            n += 1
+            cat = r.get("catId") or r["RaceId"][-4:-2]
+            feeds["tout"][0].extend(ev)
+            if cat in ("SW", "MX"):
+                feeds["femmes"][0].extend(ev)
+            if cat in ("SM", "MX"):
+                feeds["hommes"][0].extend(ev)
+            with open(os.path.join(race_dir, r["RaceId"] + ".ics"), "w", encoding="utf-8", newline="") as f:
+                f.write(ics_document(race_title(r), ics_vevent(r, e, stamp, alarm=True)))
+    for key, (events, name) in feeds.items():
+        with open(os.path.join(cal_dir, f"biathlon-{key}.ics"), "w", encoding="utf-8", newline="") as f:
+            f.write(ics_document(name, events, feed=True))
+    print(f"Calendriers : {n} courses ({label})")
+
+
+def seasonLabel(sid):
+    return f"20{sid[:2]}/{sid[2:]}" if sid and len(sid) == 4 else str(sid)
 
 
 def main():
