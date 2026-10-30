@@ -945,6 +945,19 @@ async function viewCompare(root, arg) {
 
   $("#out", root).innerHTML = `<div class="stack">
     ${missing.length ? `<div class="note">Fiche non archivée pour : ${missing.map(esc).join(", ")}.</div>` : ""}
+    <section class="panel"><div class="ph"><h2>Évolution</h2>
+      <div class="legend">${A.map((a, k) => `<span><i style="background:var(--s${k + 1})"></i>${esc(a.short)}</span>`).join("")}</div></div>
+      <div class="pb cmp-charts">
+        <div><h3>Classement général</h3>${multiChart({ xs, label: "Classement général de la Coupe du monde par saison", invert: true, yMin: 1,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).tot) })) })}</div>
+        <div><h3>Réussite au tir</h3>${multiChart({ xs, label: "Réussite au tir par saison", unit: " %",
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).shAll : null) })) })}</div>
+        <div><h3>Rang moyen</h3>${multiChart({ xs, label: "Rang moyen par saison en courses individuelles", invert: true, yMin: 1,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).avg) })) })}</div>
+        <div><h3>Podiums</h3>${multiChart({ xs, label: "Podiums individuels par saison", yMin: 0,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).pods : null) })) })}</div>
+      </div></section>
+
     <section class="panel"><div class="ph"><h2>Carrière</h2><span class="small muted">Coupe du monde, Mondiaux et JO</span></div>
       <div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>
       ${block("Palmarès", [
@@ -982,19 +995,6 @@ async function viewCompare(root, arg) {
         ["Retard sur le meilleur skieur", S.map(s => s.kmb), x => x == null ? "—" : String(x).replace(".", ",") + " s/km", -1]])}
       </tbody></table></div>
       <p class="pb small muted" style="margin:0">La meilleure valeur de chaque ligne est surlignée. Les statistiques de ski sont publiées par l'IBU pour les quatre dernières saisons seulement.</p></section>
-
-    <section class="panel"><div class="ph"><h2>Évolution</h2>
-      <div class="legend">${A.map((a, k) => `<span><i style="background:var(--s${k + 1})"></i>${esc(a.short)}</span>`).join("")}</div></div>
-      <div class="pb cmp-charts">
-        <div><h3>Classement général</h3>${multiChart({ xs, label: "Classement général de la Coupe du monde par saison", invert: true, yMin: 1,
-          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).tot) })) })}</div>
-        <div><h3>Réussite au tir</h3>${multiChart({ xs, label: "Réussite au tir par saison", unit: " %",
-          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).shAll : null) })) })}</div>
-        <div><h3>Rang moyen</h3>${multiChart({ xs, label: "Rang moyen par saison en courses individuelles", invert: true, yMin: 1,
-          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).avg) })) })}</div>
-        <div><h3>Podiums</h3>${multiChart({ xs, label: "Podiums individuels par saison", yMin: 0,
-          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).pods : null) })) })}</div>
-      </div></section>
 
     <section class="panel"><div class="ph"><h2>Face-à-face</h2><span class="small muted">Courses individuelles où les deux athlètes sont classés</span></div>
       ${A.length === 2 ? (() => { const r = h2h[0][1]; if (!r.n) return `<div class="pb muted">Aucune course en commun.</div>`;
