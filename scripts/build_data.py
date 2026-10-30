@@ -223,8 +223,10 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
             meta = next(r for r in todo if r["RaceId"] == rid)
             d = get("Results", RaceId=rid) or {}
             rows = [slim(x, RESULT_KEYS) for x in (d.get("Results") or [])]
-            comp = slim(d.get("Competition") or meta, RACE_KEYS)
-            final = is_final(comp) and bool(rows) and not d.get("IsStartList")
+            # Le détail d'une course ne renseigne pas toujours son statut : on garde celui du calendrier.
+            comp = {**slim(meta, RACE_KEYS), **slim(d.get("Competition") or {}, RACE_KEYS)}
+            final = (is_final(comp) or str(comp.get("StatusText", "")).lower() in ("final", "official")) \
+                and bool(rows) and not d.get("IsStartList")
             ski = {}
             if final and rid[-2:] in INDIVIDUAL and comp.get("HasAnalysis") is not False:
                 try:
