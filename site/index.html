@@ -236,6 +236,15 @@ table.cmp .cmp-h{white-space:nowrap;min-width:92px}
 table.cmp .cmp-h a{color:var(--ink);font-size:13px;letter-spacing:.04em;margin-left:6px}
 table.cmp td.best{background:var(--accent-soft);font-weight:700;color:var(--ink)}
 table.cmp td{white-space:nowrap}
+.mchart{position:relative;border-radius:6px;touch-action:pan-y}
+.mchart svg{cursor:crosshair}
+.mchart:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.mchart .guide{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.ctip{position:absolute;top:6px;z-index:5;min-width:170px;max-width:260px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:8px 10px;font-size:13px;pointer-events:none}
+.ctip>b{display:block;font-family:var(--display);font-size:15px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.ctip .tr{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:2px 0}
+.ctip .tr i{width:10px;height:10px;border-radius:50%}
+.ctip .tr b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cmp-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px}
 .cmp-charts>div{min-width:0}
 .cmp-charts h3{margin-bottom:8px}
@@ -630,20 +639,71 @@ function factList(bio) {
   return out;
 }
 
+/* ---------- infobulles des graphiques (souris, toucher, clavier) ---------- */
+const CHARTS = new Map(); let chartSeq = 0;
+const SVGNS = "http://www.w3.org/2000/svg";
+/* spec : { W, T, B, H, xs: [x en unités viewBox], title(i), rows(i) -> [{ color, name, value, cx?, cy? }], label } */
+function registerChart(spec) { const id = "c" + (++chartSeq); CHARTS.set(id, spec); return id; }
+function bindChart(wrap) {
+  const spec = CHARTS.get(wrap.dataset.chart); const svg = wrap.querySelector("svg");
+  if (!spec || !svg || wrap.dataset.bound) return; wrap.dataset.bound = "1";
+  const guide = document.createElementNS(SVGNS, "line");
+  guide.setAttribute("y1", spec.T); guide.setAttribute("y2", spec.H - spec.B); guide.setAttribute("class", "guide"); guide.style.display = "none";
+  const dots = document.createElementNS(SVGNS, "g"); dots.setAttribute("class", "hdots");
+  svg.appendChild(guide); svg.appendChild(dots);
+  const tip = document.createElement("div"); tip.className = "ctip"; tip.hidden = true; tip.setAttribute("role", "status"); wrap.appendChild(tip);
+  wrap.tabIndex = 0; wrap.setAttribute("aria-label", (spec.label || "Graphique") + " : survolez ou utilisez les flèches pour lire les valeurs");
+  let cur = -1;
+  const show = i => {
+    if (i < 0 || i >= spec.xs.length) return; cur = i;
+    const gx = spec.xs[i]; guide.setAttribute("x1", gx); guide.setAttribute("x2", gx); guide.style.display = "";
+    const rows = spec.rows(i);
+    dots.innerHTML = rows.filter(r => r.cy != null).map(r => `<circle cx="${r.cx ?? gx}" cy="${r.cy}" r="6.5" fill="${r.color}" stroke="var(--paper)" stroke-width="2.5"/>`).join("");
+    tip.innerHTML = `<b>${esc(spec.title(i))}</b>` + rows.map(r => `<div class="tr"><i style="background:${r.color}"></i><span>${esc(r.name)}</span><b>${esc(r.value)}</b></div>`).join("");
+    tip.hidden = false;
+    const rect = svg.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    const px = rect.left - wr.left + gx * rect.width / spec.W;
+    const tw = tip.offsetWidth; let left = px + 14;
+    if (left + tw > wr.width) left = px - tw - 14;
+    tip.style.left = Math.max(0, Math.min(left, wr.width - tw)) + "px";
+  };
+  const hide = () => { cur = -1; tip.hidden = true; guide.style.display = "none"; dots.innerHTML = ""; };
+  const nearest = clientX => {
+    const rect = svg.getBoundingClientRect(); const vx = (clientX - rect.left) * spec.W / rect.width;
+    let best = 0; spec.xs.forEach((x, i) => { if (Math.abs(x - vx) < Math.abs(spec.xs[best] - vx)) best = i; }); return best;
+  };
+  svg.addEventListener("pointermove", e => show(nearest(e.clientX)));
+  svg.addEventListener("pointerdown", e => show(nearest(e.clientX)));
+  svg.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hide(); });
+  wrap.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); show(cur < 0 ? (e.key === "ArrowRight" ? 0 : spec.xs.length - 1) : Math.max(0, Math.min(spec.xs.length - 1, cur + (e.key === "ArrowRight" ? 1 : -1)))); }
+    if (e.key === "Escape") hide();
+  });
+  wrap.addEventListener("focus", () => { if (cur < 0) show(spec.xs.length - 1); });
+  wrap.addEventListener("blur", hide);
+  document.addEventListener("pointerdown", e => { if (!wrap.contains(e.target)) hide(); });
+}
+new MutationObserver(() => document.querySelectorAll(".mchart[data-chart]:not([data-bound])").forEach(bindChart))
+  .observe(document.getElementById("view"), { childList: true, subtree: true });
+
 function rankChart(points) {
   if (points.length < 2) return "";
   const W = 640, H = 190, L = 34, R = 10, T = 14, B = 26;
   const maxR = Math.min(110, Math.max(30, ...points.map(p => p.rk || 0)));
   const x = i => L + i * (W - L - R) / (points.length - 1);
-  const y = r => T + (r - 1) * (H - T - B) / (maxR - 1);
+  const y = r => T + (Math.min(r, maxR) - 1) * (H - T - B) / (maxR - 1);
   const ticks = [1, 10, 20, 30, 40, 60, 80, 100].filter(t => t <= maxR);
   const pts = points.map((p, i) => p.rk ? [x(i), y(p.rk)] : null);
   const path = pts.filter(Boolean).map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
-  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Classement course par course">
+  const id = registerChart({ W, H, T, B, label: "Classement course par course", xs: points.map((p, i) => x(i)),
+    title: i => [points[i].label, points[i].when ? fmtDate(points[i].when) : ""].filter(Boolean).join(" · "),
+    rows: i => [{ color: "var(--accent)", name: "Classement", value: points[i].rk ? `${points[i].rk}e${points[i].field ? " sur " + points[i].field : ""}` : (points[i].raw || "non classé"), cy: pts[i] ? pts[i][1] : null },
+      ...(points[i].extra || [])] });
+  return `<div class="chart mchart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Classement course par course">
     <rect x="${L}" y="${(y(1) - 4).toFixed(1)}" width="${W - L - R}" height="${(y(10) - y(1) + 8).toFixed(1)}" fill="var(--accent-soft)"/>
     ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${t}</text>`).join("")}
     <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
-    ${pts.map((p, i) => p ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${points[i].rk <= 3 ? 4.5 : 3}" fill="${points[i].rk === 1 ? "var(--gold)" : points[i].rk <= 3 ? "var(--ink)" : "var(--paper)"}" stroke="var(--accent)" stroke-width="1.5"><title>${esc(points[i].label)} : ${points[i].rk}e</title></circle>` : "").join("")}
+    ${pts.map((p, i) => p ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${points[i].rk <= 3 ? 4.5 : 3}" fill="${points[i].rk === 1 ? "var(--gold)" : points[i].rk <= 3 ? "var(--ink)" : "var(--paper)"}" stroke="var(--accent)" stroke-width="1.5"/>` : "").join("")}
     ${points.map((p, i) => (points.length <= 14 || i % 2 === 0) ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(p.short)}</text>` : "").join("")}
   </svg></div>`;
 }
@@ -769,7 +829,10 @@ async function viewAthlete(root, id) {
         <div class="kpi"><b>${fmt1(avg(ranks))}</b><span>Rang moyen à l'arrivée</span></div>
         <div class="kpi"><b>${fmt1(avg(skis))}</b><span>Rang moyen en temps de ski</span></div>
       </div>
-      ${rankChart(rows.map(x => ({ rk: x.r.rk, label: `${x.r.Place || ""} ${DISC[x.r.Comp] || x.r.Comp}`, short: x.r.Comp })))}
+      ${rankChart(rows.map(x => ({ rk: x.r.rk, raw: x.r.Rank, label: `${x.r.Place || ""} · ${DISC[x.r.Comp] || x.r.Comp}${x.r.Level !== "WC" ? " (" + (x.r.Level === "OWG" ? "JO" : "Mondiaux") + ")" : ""}`, short: x.r.Comp, when: x.when, field: x.field,
+        extra: [{ color: "var(--muted)", name: "Tir", value: x.r.Shootings ? x.r.Shootings + " (" + (parseShots(x.r.Shootings, x.r.Comp) || []).reduce((a, b) => a + b.m, 0) + " faute" + ((parseShots(x.r.Shootings, x.r.Comp) || []).reduce((a, b) => a + b.m, 0) > 1 ? "s" : "") + ")" : "—" },
+          { color: "var(--muted)", name: "Rang ski", value: x.ski ? x.ski + "e" : "—" },
+          { color: "var(--muted)", name: "Écart", value: x.r.rk === 1 ? "vainqueur" : (x.behind && x.behind !== "0.0" ? (String(x.behind).startsWith("+") ? x.behind : "+" + x.behind) : "—") }] })))}
       <div class="scroll"><table><thead><tr><th>Rang</th><th>Lieu</th><th>Épreuve</th><th>Tir</th><th class="num">Ski</th><th class="num">Écart</th></tr></thead><tbody>
       ${rows.map(x => `<tr><td class="rk">${rkCell(x.r.rk, x.r.Rank)}</td><td>${esc(x.r.Place || "")}${x.when ? `<div class="sub">${fmtDate(x.when)}</div>` : ""}</td>
         <td><a href="#/course/${esc(x.r.RaceId)}">${esc(DISC[x.r.Comp] || x.r.Comp)}</a>${x.r.Level !== "WC" ? ` <span class="tag">${x.r.Level === "OWG" ? "JO" : "Mondiaux"}</span>` : ""}</td>
@@ -832,7 +895,7 @@ function athleteProfile(doc) {
 }
 
 /* Graphique multi-séries, une couleur par athlète */
-function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label }) {
+function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label, fmt }) {
   const W = 680, H = 230, L = 40, R = 14, T = 14, B = 28;
   const vals = series.flatMap(s => s.values.filter(x => x != null));
   if (!vals.length || xs.length < 2) return `<p class="small muted">Pas assez de saisons pour tracer ce graphique.</p>`;
@@ -844,13 +907,18 @@ function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label }
   const ticks = []; for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-9; t += step) ticks.push(+t.toFixed(6));
   if (invert && !ticks.includes(1) && lo <= 1) ticks.unshift(1);
   const every = Math.ceil(xs.length / 10);
-  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
+  const show = fmt || (vv => String(Math.round(vv * 10) / 10).replace(".", ",") + unit);
+  const id = registerChart({ W, H, T, B, label, xs: xs.map((s, i) => x(i)), title: i => "Saison " + seasonLabel(xs[i]),
+    rows: i => series.map((s, k) => ({ k, s, vv: s.values[i] }))
+      .sort((a, b) => a.vv == null ? 1 : b.vv == null ? -1 : (invert ? a.vv - b.vv : b.vv - a.vv))
+      .map(({ k, s, vv }) => ({ color: `var(--s${k + 1})`, name: s.name, value: vv == null ? "—" : show(vv), cy: vv == null ? null : y(vv) })) });
+  return `<div class="chart mchart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
     ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${String(t).replace(".", ",")}${unit}</text>`).join("")}
     ${xs.map((s, i) => i % every === 0 || i === xs.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(seasonLabel(s).slice(2))}</text>` : "").join("")}
     ${series.map((s, k) => { let d = "", pen = false;
       s.values.forEach((vv, i) => { if (vv == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(vv).toFixed(1); pen = true; });
       return `<path d="${d}" fill="none" stroke="var(--s${k + 1})" stroke-width="2.2" stroke-linejoin="round"/>` +
-        s.values.map((vv, i) => vv == null ? "" : `<circle cx="${x(i).toFixed(1)}" cy="${y(vv).toFixed(1)}" r="3.4" fill="var(--paper)" stroke="var(--s${k + 1})" stroke-width="2"><title>${esc(s.name)} · ${seasonLabel(xs[i])} : ${String(Math.round(vv * 10) / 10).replace(".", ",")}${unit}</title></circle>`).join(""); }).join("")}
+        s.values.map((vv, i) => vv == null ? "" : `<circle cx="${x(i).toFixed(1)}" cy="${y(vv).toFixed(1)}" r="3.4" fill="var(--paper)" stroke="var(--s${k + 1})" stroke-width="2"/>`).join(""); }).join("")}
   </svg></div>`;
 }
 
@@ -948,13 +1016,13 @@ async function viewCompare(root, arg) {
     <section class="panel"><div class="ph"><h2>Évolution</h2>
       <div class="legend">${A.map((a, k) => `<span><i style="background:var(--s${k + 1})"></i>${esc(a.short)}</span>`).join("")}</div></div>
       <div class="pb cmp-charts">
-        <div><h3>Classement général</h3>${multiChart({ xs, label: "Classement général de la Coupe du monde par saison", invert: true, yMin: 1,
+        <div><h3>Classement général</h3>${multiChart({ xs, label: "Classement général de la Coupe du monde par saison", invert: true, yMin: 1, fmt: v => v === 1 ? "1er · gros globe" : v + "e",
           series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).tot) })) })}</div>
-        <div><h3>Réussite au tir</h3>${multiChart({ xs, label: "Réussite au tir par saison", unit: " %",
+        <div><h3>Réussite au tir</h3>${multiChart({ xs, label: "Réussite au tir par saison", unit: " %", fmt: v => String(Math.round(v * 10) / 10).replace(".", ",") + " %",
           series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).shAll : null) })) })}</div>
-        <div><h3>Rang moyen</h3>${multiChart({ xs, label: "Rang moyen par saison en courses individuelles", invert: true, yMin: 1,
+        <div><h3>Rang moyen</h3>${multiChart({ xs, label: "Rang moyen par saison en courses individuelles", invert: true, yMin: 1, fmt: v => fmt1(v) + "e en moyenne",
           series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).avg) })) })}</div>
-        <div><h3>Podiums</h3>${multiChart({ xs, label: "Podiums individuels par saison", yMin: 0,
+        <div><h3>Podiums</h3>${multiChart({ xs, label: "Podiums individuels par saison", yMin: 0, fmt: v => v + " podium" + (v > 1 ? "s" : ""),
           series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).pods : null) })) })}</div>
       </div></section>
 
@@ -1199,7 +1267,7 @@ async function viewCalendar(root) {
 
 /* ================================================================ routeur */
 async function route() {
-  clearInterval(liveTimer); liveTimer = null;
+  clearInterval(liveTimer); liveTimer = null; CHARTS.clear();
   const root = $("#view");
   const [page, arg] = location.hash.replace(/^#\/?/, "").split("/");
   const tab = { comparer: "comparer", calendrier: "calendrier", nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
