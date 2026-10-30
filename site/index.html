@@ -221,7 +221,20 @@ a.btn:hover{text-decoration:none}
 .pchip i,.cmp-h i,.legend i,i.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
 .pchip button{all:unset;cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;color:var(--muted);font-size:18px;line-height:1}
 .pchip button:hover,.pchip button:focus-visible{background:var(--line-soft);color:var(--ink)}
-.pick-search{position:relative;max-width:440px}
+select{max-width:100%;text-overflow:ellipsis}
+#cmp-race{flex:1 1 280px;min-width:0}
+.pick-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.pick-search{position:relative;flex:1 1 260px;max-width:440px}
+.browse .controls input[type=search]{flex:1 1 200px}
+.blist{max-height:min(420px,60vh);overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:4px}
+.brow{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 10px;border-radius:4px;cursor:pointer}
+.brow:hover{background:var(--line-soft)}
+.brow.on{background:var(--accent-soft)}
+.brow input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;margin:0}
+.brow input:disabled{cursor:not-allowed}
+.brow input:disabled~.nm{color:var(--muted)}
+.brow .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:600px){.brow{grid-template-columns:22px minmax(0,1fr) auto}.brow .sub{display:none}}
 .pick-search input{width:100%}
 .sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:15;overflow:hidden}
 .sugg button{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:center;width:100%;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line-soft)}
@@ -952,26 +965,45 @@ function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label, 
 }
 
 async function viewCompare(root, arg) {
-  const ids = [...new Set(String(arg || "").split(",").map(s => s.trim()).filter(Boolean))].slice(0, MAX_CMP);
-  const go = list => { location.hash = "#/comparer" + (list.length ? "/" + list.join(",") : ""); };
+  let ids = [...new Set(String(arg || "").split(",").map(s => s.trim()).filter(Boolean))].slice(0, MAX_CMP);
+  const bf = LS.get("cmpBrowseF", { q: "", nat: "", g: "" });
+  const browseOpen = LS.get("cmpBrowse", true);
   root.innerHTML = `<div class="stack">
     <div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Comparer</h1>
       <p class="lede">Choisissez de 2 à ${MAX_CMP} athlètes pour comparer leur palmarès, leurs statistiques saison par saison et leurs face-à-face.</p></div>
     <div class="picker">
       <div class="chips" id="picked"></div>
-      <div class="pick-search"${ids.length >= MAX_CMP ? " hidden" : ""}><input type="search" id="cmp-q" placeholder="Ajouter un athlète (nom ou prénom)" autocomplete="off" aria-label="Ajouter un athlète" aria-controls="cmp-sugg">
-        <div class="sugg" id="cmp-sugg" role="listbox" hidden></div></div>
+      <div class="pick-row">
+        <div class="pick-search"><input type="search" id="cmp-q" placeholder="Rechercher un athlète (nom ou prénom)" autocomplete="off" aria-label="Rechercher un athlète à ajouter" aria-controls="cmp-sugg">
+          <div class="sugg" id="cmp-sugg" role="listbox" hidden></div></div>
+        <button class="btn ghost" id="browse-toggle" type="button" aria-controls="browse" aria-expanded="${browseOpen}">${browseOpen ? "Masquer la liste" : "Parcourir la liste"}</button>
+      </div>
+      <section class="panel browse" id="browse"${browseOpen ? "" : " hidden"}>
+        <div class="ph"><h2>Liste des athlètes</h2><span class="small muted" id="b-count"></span></div>
+        <div class="pb stack" style="gap:12px">
+          <div class="controls"><input type="search" id="b-q" placeholder="Filtrer par nom" value="${esc(bf.q)}" aria-label="Filtrer la liste par nom" autocomplete="off">
+            <select id="b-nat" aria-label="Nation"><option value="">Toutes les nations</option></select>
+            <select id="b-g" aria-label="Catégorie"><option value="">Femmes et hommes</option><option value="SW">Femmes</option><option value="SM">Hommes</option></select></div>
+          <div class="blist" id="blist" role="group" aria-label="Cochez les athlètes à comparer"></div>
+        </div>
+      </section>
     </div>
     <div id="out">${loadingHTML()}</div></div>`;
 
   let idx = [];
   try { idx = await athletesIndex(); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
   const byId = new Map(idx.map(a => [a[0], a]));
-  $("#picked", root).innerHTML = ids.map((id, k) => { const a = byId.get(id);
-    return `<span class="pchip"><i style="background:var(--s${k + 1})" aria-hidden="true"></i>${esc(a ? a[1] : id)} <span class="nat">${flag(a ? a[2] : "")}</span><button type="button" data-rm="${esc(id)}" aria-label="Retirer ${esc(a ? a[1] : id)}">×</button></span>`; }).join("");
-  root.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => go(ids.filter(x => x !== b.dataset.rm))));
-
   const keyed = idx.map(a => ({ id: a[0], name: a[1], nat: a[2], g: a[3], k: norm(a[1]) }));
+  let refresh = async () => {};
+  const setIds = list => {
+    ids = [...new Set(list)].slice(0, MAX_CMP);
+    history.replaceState(null, "", "#/comparer" + (ids.length ? "/" + ids.join(",") : ""));
+    refresh();
+  };
+  const toggle = id => ids.includes(id) ? setIds(ids.filter(x => x !== id))
+    : ids.length >= MAX_CMP ? toast(`${MAX_CMP} athlètes au maximum : retirez-en un d'abord`) : setIds([...ids, id]);
+
+  /* Recherche rapide avec suggestions */
   const q = $("#cmp-q", root), sugg = $("#cmp-sugg", root);
   const showSugg = () => {
     const terms = norm(q.value.trim()).split(/\s+/).filter(Boolean);
@@ -982,13 +1014,54 @@ async function viewCompare(root, arg) {
     sugg.innerHTML = list.length ? list.map(a => `<button type="button" role="option" data-add="${esc(a.id)}">${esc(a.name)} ${natHTML(a.nat)}<span class="sub">${a.g === "SW" ? "Femmes" : a.g === "SM" ? "Hommes" : ""}</span></button>`).join("")
       : `<div class="small muted" style="padding:8px 10px">Aucun athlète trouvé.</div>`;
     sugg.hidden = false;
-    sugg.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => go([...ids, b.dataset.add])));
+    sugg.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => { q.value = ""; sugg.hidden = true; toggle(b.dataset.add); q.focus(); }));
   };
-  if (q) {
-    q.addEventListener("input", showSugg);
-    q.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const first = sugg.querySelector("[data-add]"); if (first) first.click(); } if (e.key === "Escape") sugg.hidden = true; });
-    if (ids.length) q.focus({ preventScroll: true });
-  }
+  q.addEventListener("input", showSugg);
+  q.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const first = sugg.querySelector("[data-add]"); if (first) first.click(); } if (e.key === "Escape") sugg.hidden = true; });
+  document.addEventListener("pointerdown", e => { if (!e.target.closest || !e.target.closest(".pick-search")) sugg.hidden = true; });
+
+  /* Liste filtrable, comme dans Athlètes */
+  const browse = $("#browse", root), bq = $("#b-q", root), bnat = $("#b-nat", root), bg = $("#b-g", root), blist = $("#blist", root);
+  const nats = [...new Set(idx.map(a => a[2]).filter(Boolean))].sort((a, b) => natName(a).localeCompare(natName(b), "fr"));
+  bnat.insertAdjacentHTML("beforeend", nats.map(n => `<option value="${esc(n)}">${esc(natName(n))}</option>`).join(""));
+  bnat.value = bf.nat; bg.value = bf.g;
+  const LIMIT = 300;
+  const syncChecks = () => {
+    blist.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.checked = ids.includes(cb.value); cb.disabled = !cb.checked && ids.length >= MAX_CMP;
+      cb.closest("label").classList.toggle("on", cb.checked);
+    });
+    const shown = blist.querySelectorAll("label").length, total = +blist.dataset.total || 0;
+    $("#b-count", root).textContent = `${total} athlète${total > 1 ? "s" : ""}${total > shown ? `, ${shown} affichés` : ""} · ${ids.length}/${MAX_CMP} sélectionnés`;
+  };
+  const drawList = () => {
+    const terms = norm(bq.value.trim()).split(/\s+/).filter(Boolean), nat = bnat.value, g = bg.value;
+    LS.set("cmpBrowseF", { q: bq.value.trim(), nat, g });
+    const list = keyed.filter(a => (!nat || a.nat === nat) && (!g || a.g === g) && terms.every(t => a.k.includes(t)));
+    blist.dataset.total = list.length;
+    blist.innerHTML = list.length ? list.slice(0, LIMIT).map(a => `<label class="brow"><input type="checkbox" value="${esc(a.id)}"><span class="nm">${esc(a.name)}</span>${natHTML(a.nat)}<span class="sub">${a.g === "SW" ? "Femmes" : a.g === "SM" ? "Hommes" : ""}</span></label>`).join("")
+      + (list.length > LIMIT ? `<p class="small muted" style="margin:8px 0 0">Affinez les filtres pour voir les ${list.length - LIMIT} autres.</p>` : "")
+      : `<p class="muted" style="margin:0">Aucun athlète ne correspond aux filtres.</p>`;
+    blist.querySelectorAll("input[type=checkbox]").forEach(cb => cb.addEventListener("change", () => toggle(cb.value)));
+    syncChecks();
+  };
+  let t; bq.addEventListener("input", () => { clearTimeout(t); t = setTimeout(drawList, 120); });
+  bnat.addEventListener("change", drawList); bg.addEventListener("change", drawList);
+  $("#browse-toggle", root).addEventListener("click", ev => {
+    browse.hidden = !browse.hidden; LS.set("cmpBrowse", !browse.hidden);
+    ev.currentTarget.setAttribute("aria-expanded", String(!browse.hidden));
+    ev.currentTarget.textContent = browse.hidden ? "Parcourir la liste" : "Masquer la liste";
+  });
+  drawList();
+
+  refresh = async () => {
+  const myIds = ids.slice();
+  $("#picked", root).innerHTML = ids.map((id, k) => { const a = byId.get(id);
+    return `<span class="pchip"><i style="background:var(--s${k + 1})" aria-hidden="true"></i>${esc(a ? a[1] : id)} <span class="nat">${flag(a ? a[2] : "")}</span><button type="button" data-rm="${esc(id)}" aria-label="Retirer ${esc(a ? a[1] : id)}">×</button></span>`; }).join("");
+  root.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => toggle(b.dataset.rm)));
+  q.disabled = ids.length >= MAX_CMP;
+  q.placeholder = ids.length >= MAX_CMP ? `${MAX_CMP} athlètes sélectionnés : retirez-en un pour en ajouter` : "Rechercher un athlète (nom ou prénom)";
+  syncChecks();
 
   if (ids.length < 2) {
     let quick = "";
@@ -999,13 +1072,16 @@ async function viewCompare(root, arg) {
       const btn = (list, label) => list.length ? `<a class="btn ghost" href="#/comparer/${list.join(",")}">${label}</a>` : "";
       quick = `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px">${btn(top(w), `Top 3 femmes ${seasonLabel(sid)}`)}${btn(top(m), `Top 3 hommes ${seasonLabel(sid)}`)}</div>`;
     } catch (e) {}
+    if (ids.join() !== myIds.join()) return;
     $("#out", root).innerHTML = `<section class="panel"><div class="pb stack" style="gap:12px">
-      <p style="margin:0">${ids.length ? "Ajoutez au moins un autre athlète avec le champ ci-dessus." : "Ajoutez des athlètes avec le champ ci-dessus, ou partez d'une sélection :"}</p>${ids.length ? "" : quick}
+      <p style="margin:0">${ids.length ? "Ajoutez au moins un autre athlète : recherchez-le, ou cochez-le dans la liste." : "Recherchez des athlètes, cochez-les dans la liste, ou partez d'une sélection :"}</p>${ids.length ? "" : quick}
       <p class="small muted" style="margin:0">Astuce : sur la fiche d'un athlète, le bouton « Comparer avec d'autres athlètes » l'ajoute directement ici.</p></div></section>`;
     return;
   }
+  $("#out", root).innerHTML = loadingHTML();
 
   const docs = await Promise.all(ids.map(id => athlete(id).catch(() => null)));
+  if (ids.join() !== myIds.join()) return;
   const P = docs.map((d, k) => d ? athleteProfile(d) : null);
   const missing = ids.filter((id, k) => !P[k]);
   const A = P.filter(Boolean);
@@ -1113,9 +1189,11 @@ async function viewCompare(root, arg) {
         <p class="small muted" style="margin:8px 0 0">${raceOpts.length} course${raceOpts.length > 1 ? "s" : ""} individuelle${raceOpts.length > 1 ? "s" : ""} disputée${raceOpts.length > 1 ? "s" : ""} par tous les athlètes, de la plus récente à la plus ancienne. Rangs entre parenthèses, dans l'ordre des athlètes.</p>`
         : `<p class="muted" style="margin:0">Ces athlètes n'ont disputé aucune course individuelle ensemble sur les saisons archivées.</p>`}</div></section>
   </div>`;
-  $("#cmp-season", root).addEventListener("change", e => { LS.set("cmpSeason", e.target.value); viewCompare(root, arg); });
+  $("#cmp-season", root).addEventListener("change", e => { LS.set("cmpSeason", e.target.value); refresh(); });
   const rsel = $("#cmp-race", root);
   if (rsel) rsel.addEventListener("change", () => { $("#cmp-race-go", root).href = `#/course/${rsel.value}/${A.map(a => a.id).join(",")}`; });
+  };
+  await refresh();
 }
 
 /* ================================================================ comparaison sur une course */
