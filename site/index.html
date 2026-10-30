@@ -212,6 +212,43 @@ a.btn:hover{text-decoration:none}
 .gtag{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
 .ev-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
 .ev-head .pl{font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase}
+/* Comparateur : une couleur par athlète, lisible dans les deux thèmes */
+:root{--s1:#1D5A8C;--s2:#C2185B;--s3:#2E7D32;--s4:#D9822B;--s5:#6A4C93}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#7DB4E3;--s2:#F06292;--s3:#66BB6A;--s4:#FFB74D;--s5:#B39DDB}}
+:root[data-theme="dark"]{--s1:#7DB4E3;--s2:#F06292;--s3:#66BB6A;--s4:#FFB74D;--s5:#B39DDB}
+.picker{display:flex;flex-direction:column;gap:10px}
+.pchip{display:inline-flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-weight:600}
+.pchip i,.cmp-h i,.legend i,i.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.pchip button{all:unset;cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;color:var(--muted);font-size:18px;line-height:1}
+.pchip button:hover,.pchip button:focus-visible{background:var(--line-soft);color:var(--ink)}
+.pick-search{position:relative;max-width:440px}
+.pick-search input{width:100%}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:15;overflow:hidden}
+.sugg button{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:center;width:100%;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line-soft)}
+.sugg button:last-child{border-bottom:0}
+.sugg button:hover,.sugg button:focus-visible{background:var(--accent-soft)}
+.sugg .sub{margin-left:auto}
+table.cmp th[scope=row]{font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);white-space:normal;min-width:150px;border-bottom:1px solid var(--line-soft)}
+table.cmp th[scope=row]{position:sticky;left:0;background:var(--paper);z-index:1}
+table.cmp tbody tr:hover th[scope=row]{background:var(--accent-soft)}
+table.cmp tr.grp th{background:var(--snow);color:var(--muted);padding-top:14px}
+table.cmp .cmp-h{white-space:nowrap;min-width:92px}
+table.cmp .cmp-h a{color:var(--ink);font-size:13px;letter-spacing:.04em;margin-left:6px}
+table.cmp td.best{background:var(--accent-soft);font-weight:700;color:var(--ink)}
+table.cmp td{white-space:nowrap}
+.cmp-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px}
+.cmp-charts>div{min-width:0}
+.cmp-charts h3{margin-bottom:8px}
+.cmp-charts .chart text{font-size:12px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.duel{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.duel b{font-family:var(--display);font-size:40px;line-height:1;display:block}
+.duel span{font-size:12px;color:var(--muted)}
+.duel>div:last-child{text-align:right}
+.duel-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line-soft)}
+.duel-bar i{display:block;height:100%}
+@media (max-width:600px){.duel b{font-size:30px}.duel{gap:10px}}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -229,6 +266,7 @@ a.btn:hover{text-decoration:none}
       <a href="#/nations" data-tab="nations">Nations</a>
       <a href="#/courses" data-tab="courses">Courses</a>
       <a href="#/recherche" data-tab="recherche">Athlètes</a>
+      <a href="#/comparer" data-tab="comparer">Comparer</a>
     </nav>
   </div>
 </header>
@@ -650,6 +688,7 @@ async function viewAthlete(root, id) {
       ${bio.PhotoURI ? `<img class="photo" src="${esc(bio.PhotoURI)}" alt="Portrait de ${esc(name)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="photo ph0" aria-hidden="true">${esc(String(name).trim().charAt(0))}</div>`}
       <div class="head" style="min-width:0"><span class="eyebrow"><a href="#/nation/${esc(nat)}">${flag(nat)} ${esc(natName(nat))}</a> · ${gender === "SW" ? "Femmes" : "Hommes"}</span>
         <h1>${esc(name)}</h1>
+        <div><a class="btn ghost sm" href="#/comparer/${esc(id)}">Comparer avec d'autres athlètes</a></div>
         ${facts.length ? `<dl class="facts">${facts.map(([k, val]) => `<div class="fact"><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`).join("")}</dl>` : `<p class="lede">Pas d'informations biographiques publiées par l'IBU.</p>`}
         ${(bio.Badges || []).length ? `<div class="badges">${bio.Badges.map(b => `<span class="badge">${esc(BADGE_FR[b.Description] || b.Description)}${b.Value ? ` <b>${esc(b.Value)}</b>` : ""}</span>`).join("")}</div>` : ""}
       </div>
@@ -743,6 +782,231 @@ async function viewAthlete(root, id) {
     root.querySelectorAll("[data-season]").forEach(b => b.addEventListener("click", () => { statSel.value = b.dataset.season; loadStats(b.dataset.season); $("#stats", root).scrollIntoView({ behavior: "smooth", block: "start" }); }));
     loadStats(statSel.value);
   }
+}
+
+/* ================================================================ comparateur */
+const MAX_CMP = 5;
+const seasonSortKey = s => (+s.slice(0, 2) > 50 ? 1900 : 2000) + +s.slice(0, 2);
+const pctNum = v => { const m = String(v ?? "").match(/-?\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : null; };
+
+/* Tout ce qu'on sait comparer d'un athlète, à partir de sa fiche */
+function athleteProfile(doc) {
+  const bio = doc.bio || {}, id = doc.IBUId;
+  const res = (doc.results || []).map(r => {
+    const code = (r.RaceId || "").slice(-2);
+    return { ...r, rk: num(r.Rank), code, team: TEAM.has(code) || (r.Shootings == null && /RL|SR/.test(r.Comp || "")),
+      sid: seasonFromYear(r.Season) || (/^BT\d{4}/.test(r.RaceId || "") ? r.RaceId.slice(2, 6) : "") };
+  });
+  const ind = res.filter(r => TOP.has(r.Level) && !r.team);
+  const P = bio.Podiums || {}; const v = k => P[k] || 0;
+  const wc = new Map((bio.WC || []).map(w => [w.SeasonId || seasonFromYear(w.Year), w]));
+  const statIdx = new Map((bio.StatSeasons || []).map((y, i) => [seasonFromYear(y), i]));
+  const shootAgg = list => { let pS = 0, pM = 0, sS = 0, sM = 0;
+    list.forEach(r => (parseShots(r.Shootings, r.Comp) || []).forEach(x => { if (x.p === "P") { pS += 5; pM += x.m; } else if (x.p === "S") { sS += 5; sM += x.m; } }));
+    return { all: pct(pS + sS - pM - sM, pS + sS), prone: pct(pS - pM, pS), stand: pct(sS - sM, sS), shots: pS + sS }; };
+  const perSeason = sid => {
+    const rs = ind.filter(r => r.sid === sid), f = rs.filter(r => r.rk != null), w = wc.get(sid) || {}, i = statIdx.get(sid);
+    const at = arr => i == null || !arr ? null : arr[i];
+    const sh = shootAgg(rs);
+    return { starts: rs.length, wins: f.filter(r => r.rk === 1).length, pods: f.filter(r => r.rk <= 3).length, t10: f.filter(r => r.rk <= 10).length,
+      avg: avg(f.map(r => r.rk)), best: f.length ? Math.min(...f.map(r => r.rk)) : null,
+      tot: num(w.Tot), pts: num(w.Tot_Score), spr: num(w.Spr), pur: num(w.Pur), indv: num(w.Ind), mas: num(w.Mas),
+      shAll: pctNum(at(bio.StatShooting)) ?? sh.all, shPr: pctNum(at(bio.StatShootingProne)) ?? sh.prone, shSt: pctNum(at(bio.StatShootingStanding)) ?? sh.stand,
+      official: i != null, ski: pctNum(at(bio.StatSkiing)), kmb: pctNum(at(bio.StatSkiKMB)) };
+  };
+  const seasons = [...new Set([...wc.keys(), ...ind.map(r => r.sid)].filter(Boolean))].sort((a, b) => seasonSortKey(a) - seasonSortKey(b));
+  const totals = [...wc.values()].map(w => num(w.Tot)).filter(x => x != null);
+  const career = shootAgg(ind);
+  return {
+    id, bio, res, ind, seasons, perSeason,
+    name: bio.FullName || [bio.GivenName, bio.FamilyName].filter(Boolean).join(" ") || id,
+    short: bio.FamilyName ? bio.FamilyName.charAt(0) + bio.FamilyName.slice(1).toLowerCase() : (bio.FullName || id),
+    nat: bio.NAT || (/^BT[A-Z]{3}/.test(id) ? id.slice(2, 5) : ""),
+    age: bio.Age ?? null,
+    wcStarts: num(((bio.Stats || []).find(s => s.Description === "WC Starts") || {}).Value),
+    career: { indWins: v("ALL_I_P_G"), wcWins: v("WC_I_P_G"), indPods: v("ALL_I_P"), relayWins: v("ALL_T_P_G"),
+      owg: [v("OWG_O_P_G"), v("OWG_O_P_S"), v("OWG_O_P_B")], wch: [v("WCH_O_P_G"), v("WCH_O_P_S"), v("WCH_O_P_B")],
+      globes: totals.filter(t => t === 1).length, bestTot: totals.length ? Math.min(...totals) : null, seasonsWc: totals.length,
+      starts: ind.length, avg: avg(ind.filter(r => r.rk != null).map(r => r.rk)), shAll: career.all, shPr: career.prone, shSt: career.stand }
+  };
+}
+
+/* Graphique multi-séries, une couleur par athlète */
+function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label }) {
+  const W = 680, H = 230, L = 40, R = 14, T = 14, B = 28;
+  const vals = series.flatMap(s => s.values.filter(x => x != null));
+  if (!vals.length || xs.length < 2) return `<p class="small muted">Pas assez de saisons pour tracer ce graphique.</p>`;
+  let lo = yMin ?? Math.min(...vals), hi = yMax ?? Math.max(...vals);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const x = i => L + i * (W - L - R) / (xs.length - 1);
+  const y = vv => invert ? T + (vv - lo) * (H - T - B) / (hi - lo) : H - B - (vv - lo) * (H - T - B) / (hi - lo);
+  const step = (() => { const span = hi - lo, raw = span / 4, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 5, 10].map(k => k * p).find(k => span / k <= 5) || raw; })();
+  const ticks = []; for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-9; t += step) ticks.push(+t.toFixed(6));
+  if (invert && !ticks.includes(1) && lo <= 1) ticks.unshift(1);
+  const every = Math.ceil(xs.length / 10);
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
+    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${String(t).replace(".", ",")}${unit}</text>`).join("")}
+    ${xs.map((s, i) => i % every === 0 || i === xs.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(seasonLabel(s).slice(2))}</text>` : "").join("")}
+    ${series.map((s, k) => { let d = "", pen = false;
+      s.values.forEach((vv, i) => { if (vv == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(vv).toFixed(1); pen = true; });
+      return `<path d="${d}" fill="none" stroke="var(--s${k + 1})" stroke-width="2.2" stroke-linejoin="round"/>` +
+        s.values.map((vv, i) => vv == null ? "" : `<circle cx="${x(i).toFixed(1)}" cy="${y(vv).toFixed(1)}" r="3.4" fill="var(--paper)" stroke="var(--s${k + 1})" stroke-width="2"><title>${esc(s.name)} · ${seasonLabel(xs[i])} : ${String(Math.round(vv * 10) / 10).replace(".", ",")}${unit}</title></circle>`).join(""); }).join("")}
+  </svg></div>`;
+}
+
+async function viewCompare(root, arg) {
+  const ids = [...new Set(String(arg || "").split(",").map(s => s.trim()).filter(Boolean))].slice(0, MAX_CMP);
+  const go = list => { location.hash = "#/comparer" + (list.length ? "/" + list.join(",") : ""); };
+  root.innerHTML = `<div class="stack">
+    <div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Comparer</h1>
+      <p class="lede">Choisissez de 2 à ${MAX_CMP} athlètes pour comparer leur palmarès, leurs statistiques saison par saison et leurs face-à-face.</p></div>
+    <div class="picker">
+      <div class="chips" id="picked"></div>
+      <div class="pick-search"${ids.length >= MAX_CMP ? " hidden" : ""}><input type="search" id="cmp-q" placeholder="Ajouter un athlète (nom ou prénom)" autocomplete="off" aria-label="Ajouter un athlète" aria-controls="cmp-sugg">
+        <div class="sugg" id="cmp-sugg" role="listbox" hidden></div></div>
+    </div>
+    <div id="out">${loadingHTML()}</div></div>`;
+
+  let idx = [];
+  try { idx = await athletesIndex(); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
+  const byId = new Map(idx.map(a => [a[0], a]));
+  $("#picked", root).innerHTML = ids.map((id, k) => { const a = byId.get(id);
+    return `<span class="pchip"><i style="background:var(--s${k + 1})" aria-hidden="true"></i>${esc(a ? a[1] : id)} <span class="nat">${flag(a ? a[2] : "")}</span><button type="button" data-rm="${esc(id)}" aria-label="Retirer ${esc(a ? a[1] : id)}">×</button></span>`; }).join("");
+  root.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => go(ids.filter(x => x !== b.dataset.rm))));
+
+  const keyed = idx.map(a => ({ id: a[0], name: a[1], nat: a[2], g: a[3], k: norm(a[1]) }));
+  const q = $("#cmp-q", root), sugg = $("#cmp-sugg", root);
+  const showSugg = () => {
+    const terms = norm(q.value.trim()).split(/\s+/).filter(Boolean);
+    if (!terms.length) { sugg.hidden = true; return; }
+    const g0 = ids.length ? (byId.get(ids[0]) || [])[3] : null;
+    const list = keyed.filter(a => !ids.includes(a.id) && terms.every(t => a.k.includes(t)))
+      .sort((a, b) => (b.g === g0) - (a.g === g0) || a.name.localeCompare(b.name)).slice(0, 8);
+    sugg.innerHTML = list.length ? list.map(a => `<button type="button" role="option" data-add="${esc(a.id)}">${esc(a.name)} ${natHTML(a.nat)}<span class="sub">${a.g === "SW" ? "Femmes" : a.g === "SM" ? "Hommes" : ""}</span></button>`).join("")
+      : `<div class="small muted" style="padding:8px 10px">Aucun athlète trouvé.</div>`;
+    sugg.hidden = false;
+    sugg.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => go([...ids, b.dataset.add])));
+  };
+  if (q) {
+    q.addEventListener("input", showSugg);
+    q.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const first = sugg.querySelector("[data-add]"); if (first) first.click(); } if (e.key === "Escape") sugg.hidden = true; });
+    if (ids.length) q.focus({ preventScroll: true });
+  }
+
+  if (ids.length < 2) {
+    let quick = "";
+    try {
+      const sid = META.currentResultsSeason && seasonIds().includes(META.currentResultsSeason) ? META.currentResultsSeason : seasonIds()[0];
+      const [w, m] = await Promise.all([cup(`BT${sid}SWRLCP__SWTS`), cup(`BT${sid}SWRLCP__SMTS`)]);
+      const top = rows => rows.filter(r => r.IBUId && r.IBUId.length > 8).slice(0, 3).map(r => r.IBUId);
+      const btn = (list, label) => list.length ? `<a class="btn ghost" href="#/comparer/${list.join(",")}">${label}</a>` : "";
+      quick = `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px">${btn(top(w), `Top 3 femmes ${seasonLabel(sid)}`)}${btn(top(m), `Top 3 hommes ${seasonLabel(sid)}`)}</div>`;
+    } catch (e) {}
+    $("#out", root).innerHTML = `<section class="panel"><div class="pb stack" style="gap:12px">
+      <p style="margin:0">${ids.length ? "Ajoutez au moins un autre athlète avec le champ ci-dessus." : "Ajoutez des athlètes avec le champ ci-dessus, ou partez d'une sélection :"}</p>${ids.length ? "" : quick}
+      <p class="small muted" style="margin:0">Astuce : sur la fiche d'un athlète, le bouton « Comparer avec d'autres athlètes » l'ajoute directement ici.</p></div></section>`;
+    return;
+  }
+
+  const docs = await Promise.all(ids.map(id => athlete(id).catch(() => null)));
+  const P = docs.map((d, k) => d ? athleteProfile(d) : null);
+  const missing = ids.filter((id, k) => !P[k]);
+  const A = P.filter(Boolean);
+  if (A.length < 2) { $("#out", root).innerHTML = errorHTML(new Missing("athletes")); return; }
+
+  const allSeasons = [...new Set(A.flatMap(a => a.seasons))].sort((a, b) => seasonSortKey(a) - seasonSortKey(b));
+  const common = allSeasons.filter(s => A.every(a => a.perSeason(s).starts || a.perSeason(s).tot != null));
+  const def = LS.get("cmpSeason", null);
+  const sid = allSeasons.includes(def) ? def : (common.length ? common[common.length - 1] : allSeasons[allSeasons.length - 1]);
+  const S = A.map(a => a.perSeason(sid));
+
+  /* Lignes du tableau : [libellé, valeurs, format, sens du meilleur (1 = plus haut, -1 = plus bas, 0 = aucun)] */
+  const f0 = x => x == null ? "—" : String(x);
+  const fr = x => x == null ? "—" : fmt1(x);
+  const fp = x => x == null ? "—" : String(Math.round(x * 10) / 10).replace(".", ",") + " %";
+  const fm = m => m.some(Boolean) ? m.join("·") : "—";
+  const fs = x => x == null ? "—" : (x > 0 ? "+" : "") + String(x).replace(".", ",") + " %";
+  const block = (title, rows) => `<tr class="grp"><th colspan="${A.length + 1}">${title}</th></tr>` + rows.map(([lab, vals, fmt, dir, note]) => {
+    const nums = vals.map(v => Array.isArray(v) ? v[0] * 1e6 + v[1] * 1e3 + v[2] : v).map(v => typeof v === "number" ? v : null);
+    const present = nums.filter(v => v != null);
+    const best = dir && present.length > 1 && new Set(present).size > 1 ? (dir > 0 ? Math.max(...present) : Math.min(...present)) : null;
+    return `<tr><th scope="row">${lab}${note ? `<div class="sub">${note}</div>` : ""}</th>${vals.map((v, k) => `<td class="num mono${best != null && nums[k] === best ? " best" : ""}">${fmt(v)}</td>`).join("")}</tr>`;
+  }).join("");
+  const anyOfficial = S.some(s => s.official);
+
+  /* Face-à-face : courses individuelles (CdM, Mondiaux, JO) où les deux sont classés */
+  const rankMaps = A.map(a => new Map(a.ind.filter(r => r.rk != null).map(r => [r.RaceId, r.rk])));
+  const h2h = A.map((a, i) => A.map((b, j) => { if (i === j) return null; let w = 0, n = 0;
+    rankMaps[i].forEach((rk, rid) => { const o = rankMaps[j].get(rid); if (o != null) { n++; if (rk < o) w++; } }); return { w, n }; }));
+  const commonAll = [...rankMaps[0].keys()].filter(rid => rankMaps.every(m => m.has(rid)));
+
+  const xs = allSeasons.filter(s => seasonSortKey(s) >= seasonSortKey(allSeasons[allSeasons.length - 1]) - 14);
+  const head = `<tr><th></th>${A.map((a, k) => `<th class="num cmp-h"><i style="background:var(--s${k + 1})" aria-hidden="true"></i><a href="#/athlete/${esc(a.id)}">${esc(a.short)}</a><div class="sub">${flag(a.nat)} ${esc(a.nat)}</div></th>`).join("")}</tr>`;
+
+  $("#out", root).innerHTML = `<div class="stack">
+    ${missing.length ? `<div class="note">Fiche non archivée pour : ${missing.map(esc).join(", ")}.</div>` : ""}
+    <section class="panel"><div class="ph"><h2>Carrière</h2><span class="small muted">Coupe du monde, Mondiaux et JO</span></div>
+      <div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>
+      ${block("Palmarès", [
+        ["Gros globes", A.map(a => a.career.globes), f0, 1],
+        ["Meilleur classement général", A.map(a => a.career.bestTot), f0, -1],
+        ["Victoires individuelles", A.map(a => a.career.indWins), f0, 1],
+        ["dont Coupe du monde", A.map(a => a.career.wcWins), f0, 1],
+        ["Podiums individuels", A.map(a => a.career.indPods), f0, 1],
+        ["Victoires en relais", A.map(a => a.career.relayWins), f0, 1],
+        ["Médailles olympiques", A.map(a => a.career.owg), fm, 1, "or·argent·bronze"],
+        ["Médailles mondiales", A.map(a => a.career.wch), fm, 1, "or·argent·bronze"]])}
+      ${block("Statistiques de carrière", [
+        ["Âge", A.map(a => a.age), f0, 0],
+        ["Saisons classées en CdM", A.map(a => a.career.seasonsWc), f0, 0],
+        ["Départs individuels", A.map(a => a.career.starts), f0, 0],
+        ["Rang moyen", A.map(a => a.career.avg), fr, -1],
+        ["Réussite au tir", A.map(a => a.career.shAll), fp, 1, "calculée sur les courses individuelles"],
+        ["Couché", A.map(a => a.career.shPr), fp, 1],
+        ["Debout", A.map(a => a.career.shSt), fp, 1]])}
+      </tbody></table></div></section>
+
+    <section class="panel"><div class="ph"><h2>Saison ${seasonLabel(sid)}</h2>
+      <select id="cmp-season" aria-label="Saison comparée">${[...allSeasons].reverse().map(s => `<option value="${s}"${s === sid ? " selected" : ""}>${seasonLabel(s)}${common.includes(s) ? "" : " (incomplet)"}</option>`).join("")}</select></div>
+      <div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>
+      ${block("Classements Coupe du monde", [
+        ["Général", S.map(s => s.tot), f0, -1], ["Points", S.map(s => s.pts), f0, 1],
+        ["Sprint", S.map(s => s.spr), f0, -1], ["Poursuite", S.map(s => s.pur), f0, -1], ["Individuel", S.map(s => s.indv), f0, -1], ["Mass start", S.map(s => s.mas), f0, -1]])}
+      ${block("Courses individuelles", [
+        ["Départs", S.map(s => s.starts), f0, 0], ["Victoires", S.map(s => s.wins), f0, 1], ["Podiums", S.map(s => s.pods), f0, 1],
+        ["Top 10", S.map(s => s.t10), f0, 1], ["Meilleur résultat", S.map(s => s.best), f0, -1], ["Rang moyen", S.map(s => s.avg), fr, -1]])}
+      ${block("Tir et ski", [
+        ["Réussite au tir", S.map(s => s.shAll), fp, 1, anyOfficial ? "statistique IBU quand disponible" : "calculée sur les courses"],
+        ["Couché", S.map(s => s.shPr), fp, 1], ["Debout", S.map(s => s.shSt), fp, 1],
+        ["Vitesse de ski", S.map(s => s.ski), fs, -1, "écart à la moyenne des partants, négatif = plus rapide"],
+        ["Retard sur le meilleur skieur", S.map(s => s.kmb), x => x == null ? "—" : String(x).replace(".", ",") + " s/km", -1]])}
+      </tbody></table></div>
+      <p class="pb small muted" style="margin:0">La meilleure valeur de chaque ligne est surlignée. Les statistiques de ski sont publiées par l'IBU pour les quatre dernières saisons seulement.</p></section>
+
+    <section class="panel"><div class="ph"><h2>Évolution</h2>
+      <div class="legend">${A.map((a, k) => `<span><i style="background:var(--s${k + 1})"></i>${esc(a.short)}</span>`).join("")}</div></div>
+      <div class="pb cmp-charts">
+        <div><h3>Classement général</h3>${multiChart({ xs, label: "Classement général de la Coupe du monde par saison", invert: true, yMin: 1,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).tot) })) })}</div>
+        <div><h3>Réussite au tir</h3>${multiChart({ xs, label: "Réussite au tir par saison", unit: " %",
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).shAll : null) })) })}</div>
+        <div><h3>Rang moyen</h3>${multiChart({ xs, label: "Rang moyen par saison en courses individuelles", invert: true, yMin: 1,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).avg) })) })}</div>
+        <div><h3>Podiums</h3>${multiChart({ xs, label: "Podiums individuels par saison", yMin: 0,
+          series: A.map(a => ({ name: a.short, values: xs.map(s => a.perSeason(s).starts ? a.perSeason(s).pods : null) })) })}</div>
+      </div></section>
+
+    <section class="panel"><div class="ph"><h2>Face-à-face</h2><span class="small muted">Courses individuelles où les deux athlètes sont classés</span></div>
+      ${A.length === 2 ? (() => { const r = h2h[0][1]; if (!r.n) return `<div class="pb muted">Aucune course en commun.</div>`;
+        const l = r.w, rr = r.n - r.w;
+        return `<div class="pb"><div class="duel"><div><b style="color:var(--s1)">${l}</b><span>${esc(A[0].short)} devant</span></div><div class="duel-bar" role="img" aria-label="${l} contre ${rr} sur ${r.n} courses"><i style="width:${(100 * l / r.n).toFixed(1)}%;background:var(--s1)"></i><i style="width:${(100 * rr / r.n).toFixed(1)}%;background:var(--s2)"></i></div><div><b style="color:var(--s2)">${rr}</b><span>${esc(A[1].short)} devant</span></div></div>
+          <p class="small muted" style="margin:10px 0 0">Sur ${r.n} courses disputées ensemble.</p></div>`; })()
+      : `<div class="scroll"><table class="cmp"><thead><tr><th>Devant →</th>${A.map((a, k) => `<th class="num cmp-h"><i style="background:var(--s${k + 1})"></i>${esc(a.short)}</th>`).join("")}</tr></thead><tbody>
+        ${A.map((a, i) => `<tr><th scope="row"><i class="dot" style="background:var(--s${i + 1})"></i>${esc(a.short)}</th>${A.map((b, j) => i === j ? `<td class="num muted">·</td>` : `<td class="num mono">${h2h[i][j].n ? `<b>${h2h[i][j].w}</b><span class="sub"> / ${h2h[i][j].n}</span>` : "—"}</td>`).join("")}</tr>`).join("")}
+        </tbody></table></div><p class="pb small muted" style="margin:0">Lecture : nombre de fois où l'athlète de la ligne a fini devant celui de la colonne, sur le nombre de courses disputées ensemble. ${commonAll.length} course${commonAll.length > 1 ? "s" : ""} avec tous les athlètes au départ.</p>`}
+    </section>
+  </div>`;
+  $("#cmp-season", root).addEventListener("change", e => { LS.set("cmpSeason", e.target.value); viewCompare(root, arg); });
 }
 
 /* ================================================================ calendrier */
@@ -938,7 +1202,7 @@ async function route() {
   clearInterval(liveTimer); liveTimer = null;
   const root = $("#view");
   const [page, arg] = location.hash.replace(/^#\/?/, "").split("/");
-  const tab = { calendrier: "calendrier", nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
+  const tab = { comparer: "comparer", calendrier: "calendrier", nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
   document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
   if (!META) {
@@ -953,6 +1217,7 @@ async function route() {
   if (page === "course" && a) return viewRace(root, a);
   if (page === "recherche") return viewSearch(root);
   if (page === "athlete" && a) return viewAthlete(root, a);
+  if (page === "comparer") return viewCompare(root, a);
   return viewStandings(root);
 }
 window.addEventListener("hashchange", route);
