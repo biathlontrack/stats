@@ -249,6 +249,7 @@ table.cmp td{white-space:nowrap}
 .cmp-charts>div{min-width:0}
 .cmp-charts h3{margin-bottom:8px}
 .cmp-charts .chart text{font-size:12px}
+@media (max-width:600px){.cmp-charts .chart text{font-size:19px}}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;font-weight:600}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .duel{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
@@ -258,6 +259,16 @@ table.cmp td{white-space:nowrap}
 .duel-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line-soft)}
 .duel-bar i{display:block;height:100%}
 @media (max-width:600px){.duel b{font-size:30px}.duel{gap:10px}}
+.pick-td{width:34px;padding-right:0}
+.pick-td input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+tr.picked td{background:var(--accent-soft)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cmpbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;background:var(--band);color:var(--band-ink);border-radius:10px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.25);width:max-content;max-width:calc(100% - 32px);font-size:14px}
+.cmpbar .btn.ghost{color:var(--band-ink);border-color:var(--band-muted)}
+.cmpbar .btn:not(.ghost){background:var(--bib);border-color:var(--bib);color:var(--bib-ink)}
+a.btn.disabled{opacity:.5}
+tr.stage-row td{vertical-align:top}
+tr.stage-row .stage{justify-content:flex-end}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -554,7 +565,16 @@ async function viewRace(root, rid) {
   const lvl = /RLOG/.test(rid) ? "OWG" : /RLCH/.test(rid) ? "WCH" : "WC";
   root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/courses">Courses</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
     <div class="controls"><label class="small"><input type="checkbox" id="live"> Recharger toutes les 2 min</label><span class="small muted" id="stamp"></span><a class="ext" href="https://www.biathlonresults.com/" target="_blank" rel="noopener">Direct officiel ↗</a></div>
-    <div id="out">${loadingHTML()}</div></div>`;
+    <div id="out">${loadingHTML()}</div><div class="cmpbar" id="cmpbar" hidden><span id="cmpbar-txt"></span><button class="btn ghost sm" id="cmpbar-clear" type="button">Effacer</button><a class="btn sm" id="cmpbar-go" href="#">Comparer</a></div></div>`;
+  const picked = new Set(LS.get("racePick:" + rid, []));
+  const updateBar = () => {
+    const bar = $("#cmpbar", root); if (!bar) return;
+    bar.hidden = picked.size === 0;
+    $("#cmpbar-txt", root).textContent = picked.size === 1 ? "1 athlète sélectionné : cochez-en au moins un autre" : `${picked.size} athlètes sélectionnés`;
+    const go = $("#cmpbar-go", root); go.href = `#/course/${rid}/${[...picked].join(",")}`;
+    go.classList.toggle("disabled", picked.size < 2); go.setAttribute("aria-disabled", String(picked.size < 2));
+    LS.set("racePick:" + rid, [...picked]);
+  };
   const load = async fresh => {
     try {
       const d = await race(rid, { fresh });
@@ -576,15 +596,24 @@ async function viewRace(root, rid) {
           ${mine.length ? `<tr><td></td><td class="hide-sm"></td><td colspan="4" class="legs">${mine.map(l => `<div class="leg"><span class="mono">${l.Leg}</span><a href="#/athlete/${esc(l.IBUId)}">${esc(l.Name)}</a><span class="sh-raw">${esc(l.Shootings || "")}</span><span class="mono">${esc(l.TotalTime || "")}</span></div>`).join("")}</td></tr>` : ""}`; }).join("");
       } else {
         body = rows.map((r, i) => { const rk = num(r.Rank);
-          return `<tr><td class="rk">${rk != null ? rk : `<span class="small muted">${esc(r.IRM || "")}</span>`}</td><td class="num mono muted hide-sm">${esc(r.Bib ?? "")}</td>
+          const pick = d.IsStartList || !r.IBUId ? "" : `<input type="checkbox" class="pick" data-id="${esc(r.IBUId)}" aria-label="Sélectionner ${esc(r.Name || r.ShortName)} pour la comparaison"${picked.has(r.IBUId) ? " checked" : ""}>`;
+          return `<tr${picked.has(r.IBUId) ? ' class="picked"' : ""}><td class="pick-td">${pick}</td><td class="rk">${rk != null ? rk : `<span class="small muted">${esc(r.IRM || "")}</span>`}</td><td class="num mono muted hide-sm">${esc(r.Bib ?? "")}</td>
           <td><a class="nm" href="#/athlete/${esc(r.IBUId)}">${esc(r.Name || r.ShortName)}</a><div class="show-sm">${natHTML(r.Nat)}</div></td><td class="hide-sm">${natHTML(r.Nat)}</td>
           <td>${targetsHTML(r.Shootings, code, sp)}</td><td class="num mono">${d.IsStartList ? esc(r.StartInfo || "") : esc(timeOf(r, i === 0 && rk === 1))}</td></tr>`; }).join("");
       }
-      $("#out", root).innerHTML = `${d.IsStartList ? '<div class="note" style="margin-bottom:12px">Liste de départ : la course n\'a pas encore eu lieu.</div>' : ""}<section class="panel"><div class="scroll"><table><thead><tr><th>Rang</th><th class="num hide-sm">Dos.</th><th>${team ? "Équipe" : "Athlète"}</th><th class="hide-sm">Nation</th><th>Tir</th><th class="num">${d.IsStartList ? "Départ" : "Temps"}</th></tr></thead><tbody>${body}</tbody></table></div></section>
+      $("#out", root).innerHTML = `${d.IsStartList ? '<div class="note" style="margin-bottom:12px">Liste de départ : la course n\'a pas encore eu lieu.</div>' : ""}${!team && !d.IsStartList ? '<p class="small muted" style="margin:0 0 10px">Cochez de 2 à 5 athlètes pour comparer leur course en détail : ski tour par tour, temps au pas de tir et de tir.</p>' : ""}<section class="panel"><div class="scroll"><table><thead><tr>${team ? "" : '<th class="pick-td"><span class="sr">Comparer</span></th>'}<th>Rang</th><th class="num hide-sm">Dos.</th><th>${team ? "Équipe" : "Athlète"}</th><th class="hide-sm">Nation</th><th>Tir</th><th class="num">${d.IsStartList ? "Départ" : "Temps"}</th></tr></thead><tbody>${body}</tbody></table></div></section>
         ${team ? '<p class="small muted">Tir en relais : « tours de pénalité + balles de pioche » au couché puis au debout.</p>' : ""}`;
+      root.querySelectorAll("input.pick").forEach(cb => cb.addEventListener("change", () => {
+        const id = cb.dataset.id;
+        if (cb.checked) { if (picked.size >= MAX_CMP) { cb.checked = false; toast(`${MAX_CMP} athlètes au maximum`); return; } picked.add(id); } else picked.delete(id);
+        cb.closest("tr").classList.toggle("picked", cb.checked); updateBar();
+      }));
+      updateBar();
     } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
   };
   await load(false);
+  $("#cmpbar-clear", root).addEventListener("click", () => { picked.clear(); root.querySelectorAll("input.pick").forEach(c => { c.checked = false; c.closest("tr").classList.remove("picked"); }); updateBar(); });
+  $("#cmpbar-go", root).addEventListener("click", e => { if (picked.size < 2) { e.preventDefault(); toast("Cochez au moins 2 athlètes"); } });
   const cb = $("#live", root);
   cb.addEventListener("change", () => {
     clearInterval(liveTimer); liveTimer = null;
@@ -895,8 +924,8 @@ function athleteProfile(doc) {
 }
 
 /* Graphique multi-séries, une couleur par athlète */
-function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label, fmt }) {
-  const W = 680, H = 230, L = 40, R = 14, T = 14, B = 28;
+function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label, fmt, xLabel = s => seasonLabel(s).slice(2), tipTitle = s => "Saison " + seasonLabel(s), tickFmt }) {
+  const W = 680, H = 230, L = tickFmt ? 72 : 46, R = 14, T = 14, B = 30;
   const vals = series.flatMap(s => s.values.filter(x => x != null));
   if (!vals.length || xs.length < 2) return `<p class="small muted">Pas assez de saisons pour tracer ce graphique.</p>`;
   let lo = yMin ?? Math.min(...vals), hi = yMax ?? Math.max(...vals);
@@ -908,13 +937,13 @@ function multiChart({ xs, series, invert = false, yMin, yMax, unit = "", label, 
   if (invert && !ticks.includes(1) && lo <= 1) ticks.unshift(1);
   const every = Math.ceil(xs.length / 10);
   const show = fmt || (vv => String(Math.round(vv * 10) / 10).replace(".", ",") + unit);
-  const id = registerChart({ W, H, T, B, label, xs: xs.map((s, i) => x(i)), title: i => "Saison " + seasonLabel(xs[i]),
+  const id = registerChart({ W, H, T, B, label, xs: xs.map((s, i) => x(i)), title: i => tipTitle(xs[i], i),
     rows: i => series.map((s, k) => ({ k, s, vv: s.values[i] }))
       .sort((a, b) => a.vv == null ? 1 : b.vv == null ? -1 : (invert ? a.vv - b.vv : b.vv - a.vv))
-      .map(({ k, s, vv }) => ({ color: `var(--s${k + 1})`, name: s.name, value: vv == null ? "—" : show(vv), cy: vv == null ? null : y(vv) })) });
+      .map(({ k, s, vv }) => ({ color: `var(--s${k + 1})`, name: s.name, value: vv == null ? "—" : show(vv, k, i), cy: vv == null ? null : y(vv) })) });
   return `<div class="chart mchart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
-    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${String(t).replace(".", ",")}${unit}</text>`).join("")}
-    ${xs.map((s, i) => i % every === 0 || i === xs.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(seasonLabel(s).slice(2))}</text>` : "").join("")}
+    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${tickFmt ? tickFmt(t) : String(t).replace(".", ",") + unit}</text>`).join("")}
+    ${xs.map((s, i) => i % every === 0 || i === xs.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${esc(xLabel(s, i))}</text>` : "").join("")}
     ${series.map((s, k) => { let d = "", pen = false;
       s.values.forEach((vv, i) => { if (vv == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(vv).toFixed(1); pen = true; });
       return `<path d="${d}" fill="none" stroke="var(--s${k + 1})" stroke-width="2.2" stroke-linejoin="round"/>` +
@@ -1007,6 +1036,10 @@ async function viewCompare(root, arg) {
   const h2h = A.map((a, i) => A.map((b, j) => { if (i === j) return null; let w = 0, n = 0;
     rankMaps[i].forEach((rk, rid) => { const o = rankMaps[j].get(rid); if (o != null) { n++; if (rk < o) w++; } }); return { w, n }; }));
   const commonAll = [...rankMaps[0].keys()].filter(rid => rankMaps.every(m => m.has(rid)));
+  const archived = new Set(seasonIds());
+  const raceOpts = A[0].ind.filter(r => archived.has(r.sid) && A.every(b => b.ind.some(x => x.RaceId === r.RaceId)))
+    .map(r => ({ rid: r.RaceId, label: `${seasonLabel(r.sid)} · ${r.Place || ""} · ${DISC[r.Comp] || r.Comp}${r.Level !== "WC" ? (r.Level === "OWG" ? " (JO)" : " (Mondiaux)") : ""} — ${A.map(b => { const x = b.ind.find(y => y.RaceId === r.RaceId); return x.rk ? x.rk + "e" : (x.Rank || "—"); }).join(" / ")}`, sk: seasonSortKey(r.sid), i: r.i }))
+    .sort((a, b) => b.sk - a.sk || a.i - b.i);
 
   const xs = allSeasons.filter(s => seasonSortKey(s) >= seasonSortKey(allSeasons[allSeasons.length - 1]) - 14);
   const head = `<tr><th></th>${A.map((a, k) => `<th class="num cmp-h"><i style="background:var(--s${k + 1})" aria-hidden="true"></i><a href="#/athlete/${esc(a.id)}">${esc(a.short)}</a><div class="sub">${flag(a.nat)} ${esc(a.nat)}</div></th>`).join("")}</tr>`;
@@ -1073,8 +1106,132 @@ async function viewCompare(root, arg) {
         ${A.map((a, i) => `<tr><th scope="row"><i class="dot" style="background:var(--s${i + 1})"></i>${esc(a.short)}</th>${A.map((b, j) => i === j ? `<td class="num muted">·</td>` : `<td class="num mono">${h2h[i][j].n ? `<b>${h2h[i][j].w}</b><span class="sub"> / ${h2h[i][j].n}</span>` : "—"}</td>`).join("")}</tr>`).join("")}
         </tbody></table></div><p class="pb small muted" style="margin:0">Lecture : nombre de fois où l'athlète de la ligne a fini devant celui de la colonne, sur le nombre de courses disputées ensemble. ${commonAll.length} course${commonAll.length > 1 ? "s" : ""} avec tous les athlètes au départ.</p>`}
     </section>
+
+    <section class="panel" id="race-pick"><div class="ph"><h2>Comparer sur une course</h2><span class="small muted">Ski tour par tour, temps de tir et au pas de tir</span></div>
+      <div class="pb">${raceOpts.length ? `<div class="controls"><select id="cmp-race" aria-label="Course à comparer">${raceOpts.map(o => `<option value="${esc(o.rid)}">${esc(o.label)}</option>`).join("")}</select>
+        <a class="btn" id="cmp-race-go" href="#/course/${esc(raceOpts[0].rid)}/${A.map(a => a.id).join(",")}">Comparer sur cette course</a></div>
+        <p class="small muted" style="margin:8px 0 0">${raceOpts.length} course${raceOpts.length > 1 ? "s" : ""} individuelle${raceOpts.length > 1 ? "s" : ""} disputée${raceOpts.length > 1 ? "s" : ""} par tous les athlètes, de la plus récente à la plus ancienne. Rangs entre parenthèses, dans l'ordre des athlètes.</p>`
+        : `<p class="muted" style="margin:0">Ces athlètes n'ont disputé aucune course individuelle ensemble sur les saisons archivées.</p>`}</div></section>
   </div>`;
   $("#cmp-season", root).addEventListener("change", e => { LS.set("cmpSeason", e.target.value); viewCompare(root, arg); });
+  const rsel = $("#cmp-race", root);
+  if (rsel) rsel.addEventListener("change", () => { $("#cmp-race-go", root).href = `#/course/${rsel.value}/${A.map(a => a.id).join(",")}`; });
+}
+
+/* ================================================================ comparaison sur une course */
+const secs = t => { if (t == null) return null; const str = String(t).replace(/^\+/, "").trim(); if (!/^\d/.test(str)) return null;
+  const p = str.split(":").map(Number); return p.some(isNaN) ? null : p.reduce((a, b) => a * 60 + b, 0); };
+function fmtSecs(v, signed = false) {
+  if (v == null || isNaN(v)) return "—";
+  const neg = v < 0; let t = Math.round(Math.abs(v) * 10) / 10;
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = (t % 60).toFixed(1).replace(".", ",");
+  const body = h ? `${h}:${String(m).padStart(2, "0")}:${sec.padStart(4, "0")}` : m ? `${m}:${sec.padStart(4, "0")}` : sec + " s";
+  return (signed ? (neg ? "−" : "+") : "") + body;
+}
+const STAGE_FR = { P: "couché", S: "debout", "?": "" };
+const ord = v => v === 1 ? "1er" : v + "e";
+function penaltyText(code, misses) {
+  if (misses == null) return "—";
+  if (!misses) return "aucune";
+  if (code === "IN") return `${misses} min`;
+  if (code === "SI") return `${misses * 45} s`;
+  return `${misses} tour${misses > 1 ? "s" : ""}`;
+}
+
+async function viewRaceCompare(root, rid, idsStr) {
+  const ids = [...new Set(idsStr.split(",").map(x => x.trim()).filter(Boolean))].slice(0, MAX_CMP);
+  const code = rid.slice(-2), sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
+  const go = list => { location.hash = list.length >= 2 ? `#/course/${rid}/${list.join(",")}` : `#/course/${rid}`; };
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/course/${esc(rid)}">← Résultats de la course</a> · ${seasonLabel(sid)}</span>
+    <h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
+    <div class="picker"><div class="chips" id="picked"></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap" id="adder"></div></div>
+    <div id="out">${loadingHTML()}</div></div>`;
+  let d, an = null;
+  try { [d, an] = await Promise.all([race(rid), data(`analysis/${rid}.json`).catch(() => null)]); } catch (e) { $("#out", root).innerHTML = errorHTML(e); return; }
+  const c = d.Competition || {}, ev = d.SportEvt || {};
+  $("#rtitle", root).textContent = c.ShortDescription || c.Description || DISC[code] || rid;
+  $("#rsub", root).textContent = [ev.ShortDescription || ev.Organizer, fmtDateTime(c.StartTime)].filter(Boolean).join(" · ");
+  const rows = (d.Results || []).filter(r => !r.IsTeam && r.IBUId);
+  const A = ids.map(id => rows.find(r => r.IBUId === id)).filter(Boolean);
+  $("#picked", root).innerHTML = A.map((r, k) => `<span class="pchip"><i style="background:var(--s${k + 1})" aria-hidden="true"></i>${esc(r.Name || r.ShortName)} <span class="nat">${flag(r.Nat)}</span><button type="button" data-rm="${esc(r.IBUId)}" aria-label="Retirer ${esc(r.Name)}">×</button></span>`).join("");
+  root.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => go(A.map(r => r.IBUId).filter(x => x !== b.dataset.rm))));
+  if (A.length < MAX_CMP) {
+    const others = rows.filter(r => !A.includes(r));
+    $("#adder", root).innerHTML = `<select id="add-ath" aria-label="Ajouter un athlète de cette course"><option value="">Ajouter un athlète de la course…</option>${others.map(r => `<option value="${esc(r.IBUId)}">${num(r.Rank) ?? esc(r.IRM || "")}${num(r.Rank) ? "e" : ""} · ${esc(r.Name || r.ShortName)} (${esc(r.Nat || "")})</option>`).join("")}</select>`;
+    $("#add-ath", root).addEventListener("change", e => { if (e.target.value) go([...A.map(r => r.IBUId), e.target.value]); });
+  }
+  if (A.length < 2) { $("#out", root).innerHTML = `<div class="note">Choisissez au moins deux athlètes ayant pris part à cette course.</div>`; return; }
+
+  const n = (an && an.shootings) || c.NrShootings || (code === "SP" ? 2 : 4);
+  const stages = parseShots(Array(n).fill(0).join("+"), code, c.ShootingPositions) || [];
+  const P = A.map(r => {
+    const x = (an && an.athletes && an.athletes[r.IBUId]) || {};
+    const pair = key => x[key] ? { t: secs(x[key][0]), rk: x[key][1] } : { t: null, rk: null };
+    const shots = parseShots(r.Shootings, code, c.ShootingPositions);
+    return { r, rk: num(r.Rank), time: secs(r.TotalTime || r.Result), behind: num(r.Rank) === 1 ? 0 : secs(r.Behind),
+      shots, misses: shots ? shots.reduce((a, b) => a + b.m, 0) : null, start: code === "PU" && /^\+?\d{1,2}:\d{2}(\.\d)?$|^\+?\d+(\.\d)?$/.test(String(r.StartInfo || "").trim()) ? secs(r.StartInfo) : null,
+      ski: pair("c"), range: pair("r"), shoot: pair("s"),
+      laps: Array.from({ length: n + 1 }, (_, i) => pair("l" + (i + 1))),
+      rng: Array.from({ length: n }, (_, i) => pair("g" + (i + 1))),
+      st: Array.from({ length: n }, (_, i) => pair("t" + (i + 1))) };
+  });
+  const hasAn = P.some(p => p.ski.t != null);
+  const field = rows.filter(r => num(r.Rank) != null).length;
+
+  /* Tableau générique : une colonne par athlète, meilleure valeur surlignée */
+  const head = `<tr><th></th>${P.map((p, k) => `<th class="num cmp-h"><i style="background:var(--s${k + 1})" aria-hidden="true"></i><a href="#/athlete/${esc(p.r.IBUId)}">${esc(p.r.ShortName || p.r.Name)}</a><div class="sub">${flag(p.r.Nat)} ${esc(p.r.Nat || "")}</div></th>`).join("")}</tr>`;
+  const line = (lab, vals, render, dir, note) => {
+    const present = vals.filter(v => v != null);
+    const best = dir && present.length > 1 && new Set(present).size > 1 ? (dir > 0 ? Math.max(...present) : Math.min(...present)) : null;
+    return `<tr><th scope="row">${lab}${note ? `<div class="sub">${note}</div>` : ""}</th>${vals.map((v, k) => `<td class="num mono${best != null && v === best ? " best" : ""}">${render(v, k)}</td>`).join("")}</tr>`;
+  };
+  const grp = t => `<tr class="grp"><th colspan="${P.length + 1}">${t}</th></tr>`;
+  const withRank = (v, rk) => v == null ? "—" : `${fmtSecs(v)}${rk ? `<div class="sub">${ord(rk)}</div>` : ""}`;
+  const gap = list => { const present = list.filter(v => v != null); const m = present.length ? Math.min(...present) : null; return list.map(v => v == null || m == null ? null : v - m); };
+
+  let html = `<section class="panel"><div class="ph"><h2>Synthèse</h2><span class="small muted">${field} classés</span></div><div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>
+    ${grp("Résultat")}
+    ${line("Classement", P.map(p => p.rk), (v, k) => v ? ord(v) : esc(P[k].r.IRM || "—"), -1)}
+    ${code === "PU" ? line("Départ de la poursuite", P.map(p => p.start), v => v == null ? "—" : (v ? "+" + fmtSecs(v) : "en tête"), -1, "retard au départ, issu du sprint") : ""}
+    ${line("Temps", P.map(p => p.time), v => fmtSecs(v), -1)}
+    ${line("Écart au vainqueur", P.map(p => p.behind), v => v == null ? "—" : v ? fmtSecs(v, true) : "vainqueur", -1)}
+    ${grp("Tir")}
+    ${line("Fautes", P.map(p => p.misses), v => v ?? "—", -1)}
+    ${line("Pénalités", P.map(p => p.misses), v => penaltyText(code, v), 0, code === "IN" ? "1 minute par faute" : code === "SI" ? "45 secondes par faute" : "un tour de 150 m par faute")}
+    ${hasAn ? line("Temps de tir", P.map(p => p.shoot.t), (v, k) => withRank(v, P[k].shoot.rk), -1, "temps passé à tirer, cumulé") : ""}
+    ${hasAn ? line("Temps au pas de tir", P.map(p => p.range.t), (v, k) => withRank(v, P[k].range.rk), -1, "de l'entrée à la sortie du pas de tir") : ""}
+    ${hasAn ? grp("Ski") + line("Temps de ski", P.map(p => p.ski.t), (v, k) => withRank(v, P[k].ski.rk), -1, "hors pas de tir et tours de pénalité") : ""}
+    ${hasAn ? grp("Où se fait l'écart") + line("Sur les skis", gap(P.map(p => p.ski.t)), v => v == null ? "—" : v ? fmtSecs(v, true) : "meilleur", -1, "par rapport au meilleur du groupe")
+      + line("Au pas de tir", gap(P.map(p => p.range.t)), v => v == null ? "—" : v ? fmtSecs(v, true) : "meilleur", -1) + line("En fautes", gap(P.map(p => p.misses)), v => v == null ? "—" : v ? `+${v} (${penaltyText(code, v)})` : "meilleur", -1) : ""}
+    </tbody></table></div></section>`;
+
+  if (hasAn) {
+    const order = [];
+    for (let i = 0; i <= n; i++) { order.push({ lap: i }); if (i < n) order.push({ stage: i }); }
+    html += `<section class="panel"><div class="ph"><h2>Tour par tour</h2><span class="small muted">Temps et rang parmi tous les partants</span></div><div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>
+      ${order.map(o => o.lap != null
+        ? line(`Tour ${o.lap + 1}`, P.map(p => p.laps[o.lap].t), (v, k) => withRank(v, P[k].laps[o.lap].rk), -1, "ski")
+        : `<tr class="stage-row"><th scope="row">Tir ${o.stage + 1}<div class="sub">${STAGE_FR[(stages[o.stage] || {}).p] || ""}</div></th>${P.map(p => {
+            const m = p.shots && p.shots[o.stage] ? p.shots[o.stage].m : null;
+            return `<td class="num"><div>${m == null ? "—" : '<span class="stage">' + '<i class="tg h"></i>'.repeat(5 - Math.min(5, m)) + '<i class="tg m"></i>'.repeat(Math.min(5, m)) + "</span>"}</div>
+              <div class="sub mono">${p.st[o.stage].t != null ? `tir ${fmtSecs(p.st[o.stage].t)}` : ""}${p.rng[o.stage].t != null ? ` · pas ${fmtSecs(p.rng[o.stage].t)}` : ""}</div></td>`; }).join("")}</tr>`).join("")}
+      </tbody></table></div></section>`;
+    const lapsX = Array.from({ length: n + 1 }, (_, i) => i + 1), stX = Array.from({ length: n }, (_, i) => i + 1);
+    const stTitle = s => `Tir ${s}${stages[s - 1] && STAGE_FR[stages[s - 1].p] ? " · " + STAGE_FR[stages[s - 1].p] : ""}`;
+    const missTxt = (k, i) => { const m = P[k].shots && P[k].shots[i] ? P[k].shots[i].m : null; return m == null ? "" : ` · ${m} faute${m > 1 ? "s" : ""}`; };
+    html += `<section class="panel"><div class="ph"><h2>En graphiques</h2><div class="legend">${P.map((p, k) => `<span><i style="background:var(--s${k + 1})"></i>${esc(p.r.ShortName || p.r.Name)}</span>`).join("")}</div></div>
+      <div class="pb cmp-charts">
+        <div><h3>Temps de ski par tour</h3>${multiChart({ xs: lapsX, label: "Temps de ski par tour", invert: true, xLabel: s => "T" + s, tipTitle: s => "Tour " + s,
+          tickFmt: t => fmtSecs(t), fmt: (v, k, i) => `${fmtSecs(v)}${P[k].laps[i].rk ? " · " + ord(P[k].laps[i].rk) : ""}`, series: P.map(p => ({ name: p.r.ShortName || p.r.Name, values: p.laps.map(x => x.t) })) })}</div>
+        <div><h3>Temps de tir par passage</h3>${multiChart({ xs: stX, label: "Temps de tir par passage", invert: true, xLabel: s => "Tir " + s, tipTitle: stTitle,
+          tickFmt: t => fmtSecs(t), fmt: (v, k, i) => fmtSecs(v) + missTxt(k, i), series: P.map(p => ({ name: p.r.ShortName || p.r.Name, values: p.st.map(x => x.t) })) })}</div>
+        <div><h3>Temps au pas de tir</h3>${multiChart({ xs: stX, label: "Temps au pas de tir par passage", invert: true, xLabel: s => "Tir " + s, tipTitle: stTitle,
+          tickFmt: t => fmtSecs(t), fmt: (v, k, i) => fmtSecs(v) + missTxt(k, i), series: P.map(p => ({ name: p.r.ShortName || p.r.Name, values: p.rng.map(x => x.t) })) })}</div>
+      </div><p class="pb small muted" style="margin:0">Plus le point est haut, plus le temps est court. Survolez ou touchez un graphique pour lire les valeurs.</p></section>`;
+  } else {
+    html += `<div class="note">Le détail tour par tour (ski, temps de tir, temps au pas de tir) est disponible pour les courses individuelles des cinq dernières saisons. ${META.currentResultsSeason && sid && seasonSortKey(sid) >= seasonSortKey(META.currentResultsSeason) - 4 ? "Il sera ajouté lors d'une prochaine mise à jour des données." : "Cette course est plus ancienne."}</div>`;
+  }
+  $("#out", root).innerHTML = html;
 }
 
 /* ================================================================ calendrier */
@@ -1269,7 +1426,7 @@ async function viewCalendar(root) {
 async function route() {
   clearInterval(liveTimer); liveTimer = null; CHARTS.clear();
   const root = $("#view");
-  const [page, arg] = location.hash.replace(/^#\/?/, "").split("/");
+  const [page, arg, arg2] = location.hash.replace(/^#\/?/, "").split("/");
   const tab = { comparer: "comparer", calendrier: "calendrier", nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
   document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
@@ -1282,6 +1439,7 @@ async function route() {
   if (page === "nations") return viewNations(root);
   if (page === "nation" && a) return viewNation(root, a);
   if (page === "courses") return viewCourses(root);
+  if (page === "course" && a && arg2) return viewRaceCompare(root, a, decodeURIComponent(arg2));
   if (page === "course" && a) return viewRace(root, a);
   if (page === "recherche") return viewSearch(root);
   if (page === "athlete" && a) return viewAthlete(root, a);

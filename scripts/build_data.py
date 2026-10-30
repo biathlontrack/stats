@@ -136,6 +136,7 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
     state.setdefault("races", {})      # RaceId -> {"final": bool, "at": iso}
     state.setdefault("athletes", {})   # IBUId -> iso de la dernière collecte
     state.setdefault("seasons_done", [])
+    state.setdefault("analysis", {})   # RaceId -> "ok" | "none"
 
     # 1. Saisons
     seasons = get("Seasons") or []
@@ -280,6 +281,13 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
                 state["seasons_done"].append(sid)
         write_json(state_path, state)
 
+    # 1 bis. Analyse détaillée des courses individuelles (temps par tour, pas de tir, tir)
+    try:
+        fetch_analyses(out, covered, state)
+    except Exception as e:  # noqa: BLE001 — l'analyse est un bonus : elle ne bloque jamais la publication
+        print(f"  ! analyses : {e}", file=sys.stderr)
+    write_json(state_path, state)
+
     # 2. Fiches athlètes
     current_ids = set()
     for sid in live:
@@ -349,6 +357,68 @@ def build(out, seasons_back, athlete_max_age_days, max_athletes):
     write_json(os.path.join(out, "meta.json"), meta)
     print(json.dumps(meta, ensure_ascii=False))
     return meta
+
+
+# --------------------------------------------------------------------------- analyse détaillée
+ANALYSIS_SEASONS = int(os.environ.get("ANALYSIS_SEASONS", "5"))
+MAX_ANALYSIS = int(os.environ.get("MAX_ANALYSIS_RACES", "250"))
+
+
+def fetch_analyses(out, covered, state):
+    """Pour chaque course individuelle définitive des saisons récentes, enregistre
+    data/analysis/<RaceId>.json : temps et rang de ski (total et par tour),
+    au pas de tir et de tir (total et par passage), pour chaque athlète."""
+    recent = covered[: ANALYSIS_SEASONS + 1]
+    todo = []
+    for sid in recent:  # du plus récent au plus ancien
+        season = read_json(os.path.join(out, "seasons", f"{sid}.json")) or {}
+        for e in season.get("events", []):
+            for r in e.get("races", []):
+                rid = r["RaceId"]
+                if rid[-2:] not in INDIVIDUAL or not state["races"].get(rid, {}).get("final"):
+                    continue
+                if state["analysis"].get(rid) and os.path.exists(os.path.join(out, "analysis", rid + ".json")):
+                    continue
+                if state["analysis"].get(rid) == "none":
+                    continue
+                todo.append(r)
+    if not todo:
+        return
+    total = len(todo)
+    todo = todo[:MAX_ANALYSIS]
+    print(f"Analyses détaillées : {len(todo)} courses (sur {total} en attente)")
+
+    def one(rid):
+        meta = next(r for r in todo if r["RaceId"] == rid)
+        n = int(meta.get("NrShootings") or (2 if rid[-2:] == "SP" else 4))
+        types = [("c", "CRST"), ("r", "RNGT"), ("s", "STTM")] + [(f"l{i}", f"CRS{i}") for i in range(1, n + 2)] \
+            + [(f"g{i}", f"RNG{i}") for i in range(1, n + 1)] + [(f"t{i}", f"S{i}TM") for i in range(1, n + 1)]
+        per = {}
+        got = 0
+        for key, tid in types:
+            try:
+                d = get("AnalyticResults", RaceId=rid, TypeId=tid) or {}
+            except RuntimeError:
+                continue
+            rows = d.get("Results") or []
+            if rows:
+                got += 1
+            for x in rows:
+                ibu = x.get("IBUId")
+                if not ibu or not x.get("TotalTime"):
+                    continue
+                rk = x.get("Rank")
+                per.setdefault(ibu, {})[key] = [x["TotalTime"], int(rk) if str(rk or "").isdigit() else None]
+        if not got:
+            return "none"
+        write_json(os.path.join(out, "analysis", rid + ".json"), {"RaceId": rid, "shootings": n, "athletes": per, "fetchedAt": iso(now_utc())})
+        return "ok"
+
+    res = pmap(one, [r["RaceId"] for r in todo])
+    for rid, v in res.items():
+        if v:
+            state["analysis"][rid] = v
+    print(f"  {sum(1 for v in res.values() if v == 'ok')} analyses enregistrées")
 
 
 # --------------------------------------------------------------------------- calendriers iCalendar
