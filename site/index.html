@@ -791,6 +791,18 @@ function googleLink(r, e) {
     details: `${eventKind(e.EventId)} de biathlon – ${place}\nRésultats : ${raceUrl(r)}`, location: [r.Location, place, e.NatLong || e.Nat].filter(Boolean).join(", ") });
   return "https://calendar.google.com/calendar/render?" + p.toString();
 }
+const OUTLOOK_HOST = { live: "https://outlook.live.com", office: "https://outlook.office.com" };
+function outlookSubscribe(kind, feedUrl, name) {
+  return `${OUTLOOK_HOST[kind]}/calendar/0/addfromweb?` + new URLSearchParams({ url: feedUrl, name }).toString();
+}
+function outlookEventLink(r, e) {
+  const start = new Date(r.StartTime), end = new Date(start.getTime() + (DURATION_MIN[raceDisc(r)] || 60) * 60000);
+  const place = e.ShortDescription || e.Organizer || "";
+  const p = new URLSearchParams({ path: "/calendar/action/compose", rru: "addevent", subject: `Biathlon – ${raceTitle(r)} (${place})`,
+    startdt: start.toISOString().replace(/\.\d{3}Z$/, "Z"), enddt: end.toISOString().replace(/\.\d{3}Z$/, "Z"),
+    location: [r.Location, place, e.NatLong || e.Nat].filter(Boolean).join(", "), body: `${eventKind(e.EventId)} de biathlon – ${place}. Résultats : ${raceUrl(r)}` });
+  return "https://outlook.live.com/calendar/0/deeplink/compose?" + p.toString();
+}
 function toast(msg) {
   const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
@@ -824,6 +836,7 @@ async function viewCalendar(root) {
   const feedKey = f.g === "SW" ? "femmes" : f.g === "SM" ? "hommes" : "tout";
   const feedUrl = feedBase + `biathlon-${feedKey}.ics`;
   const webcal = feedUrl.replace(/^https?:/, "webcal:");
+  const feedName = `Biathlon ${seasonLabel(sid)}${f.g === "SW" ? " – femmes" : f.g === "SM" ? " – hommes" : ""}`;
   root.innerHTML = `<div class="stack">
     <div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
       <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}. Ajoutez-les à votre agenda une par une, ou abonnez-vous pour recevoir automatiquement les changements d'horaires.</p></div>
@@ -831,9 +844,10 @@ async function viewCalendar(root) {
     <section class="panel"><div class="ph"><h2>S'abonner</h2><div class="seg" role="group" aria-label="Courses incluses dans l'abonnement">
         <button data-cg="all" class="${f.g === "all" ? "on" : ""}">Tout</button><button data-cg="SW" class="${f.g === "SW" ? "on" : ""}">Femmes</button><button data-cg="SM" class="${f.g === "SM" ? "on" : ""}">Hommes</button></div></div>
       <div class="pb subs">
-        <div class="row"><a class="btn" href="${esc(webcal)}">Apple Calendrier · Outlook</a><a class="btn ghost" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Agenda</a></div>
+        <div class="row"><a class="btn" href="${esc(outlookSubscribe("live", feedUrl, feedName))}" target="_blank" rel="noopener">Outlook</a><a class="btn ghost" href="${esc(webcal)}">Apple Calendrier</a><a class="btn ghost" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Agenda</a></div>
+        <p class="small" style="margin:0">Compte Outlook professionnel ou scolaire ? <a href="${esc(outlookSubscribe("office", feedUrl, feedName))}" target="_blank" rel="noopener">S'abonner avec Microsoft 365</a></p>
         <div class="row"><code id="feed-url">${esc(feedUrl)}</code><button class="btn ghost sm" id="copy-feed" type="button">Copier le lien</button></div>
-        <p class="small muted" style="margin:0">${f.g === "all" ? "Toutes les courses" : f.g === "SW" ? "Courses femmes et relais mixtes" : "Courses hommes et relais mixtes"}. L'agenda abonné se met à jour tout seul (en général en quelques heures) si l'IBU modifie un horaire. Sur Android, abonnez-vous via Google Agenda.</p>
+        <p class="small muted" style="margin:0">${f.g === "all" ? "Toutes les courses" : f.g === "SW" ? "Courses femmes et relais mixtes" : "Courses hommes et relais mixtes"}. Le bouton Outlook ouvre Outlook sur le web, connecté à votre compte Microsoft : une fois l'abonnement validé, il apparaît aussi dans l'application Outlook sur ordinateur et sur téléphone. L'agenda se met à jour tout seul si l'IBU modifie un horaire.</p>
       </div></section>
     <div class="controls" id="filters"></div>
     <div id="out">${loadingHTML()}</div></div>`;
@@ -882,10 +896,10 @@ async function viewCalendar(root) {
         <div class="cal-races">${day.items.map(x => `<div class="cal-race${x.d.getTime() + 2 * 3600e3 < now ? " past" : ""}">
           <span class="t">${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }))}</span>
           <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc({ SW: "F", SM: "H", MX: "Mixte" }[raceCat(x.r)] || "")}</span></span>
-          <span class="acts"><a class="btn ghost sm" href="${icsHref(x.r)}" aria-label="Ajouter ${esc(raceTitle(x.r))} à mon agenda">Agenda</a><a class="btn ghost sm" href="${esc(googleLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Google Agenda">Google</a></span>
+          <span class="acts"><a class="btn ghost sm" href="${icsHref(x.r)}" aria-label="Ajouter ${esc(raceTitle(x.r))} à mon agenda">Agenda</a><a class="btn ghost sm" href="${esc(outlookEventLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Outlook">Outlook</a><a class="btn ghost sm" href="${esc(googleLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Google Agenda">Google</a></span>
         </div>`).join("")}</div></div>`).join("")}
     </section>`).join("")}</div>
-    <p class="small muted">Les boutons « Agenda » ajoutent la course avec un rappel 30 minutes avant le départ. Durées indicatives.</p>`;
+    <p class="small muted">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
 }
 
 /* ================================================================ routeur */
