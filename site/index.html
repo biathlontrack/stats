@@ -206,6 +206,7 @@ a.btn:hover{text-decoration:none}
 .cal-race .n{min-width:0}
 .cal-race .n a{font-weight:600;color:var(--ink)}
 .cal-race .acts{display:flex;gap:6px}
+.chip.clear{border-style:dashed;color:var(--muted)}
 .rstat{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
 a.rstat.done{color:var(--accent)}
 .ev-no{display:inline-block;min-width:2.2em;font-family:var(--display);font-weight:700;font-size:18px;color:var(--muted);margin-right:4px}
@@ -1542,6 +1543,10 @@ async function viewRaceCompare(root, rid, idsStr) {
 
 /* ================================================================ calendrier */
 const DISC_FR = {SP:"Sprint",PU:"Poursuite",IN:"Individuel",SI:"Individuel court",MS:"Mass start",RL:"Relais",SR:"Relais simple mixte",SS:"Super sprint"};
+/* Clé de filtre par format : le relais mixte (relais de catégorie mixte) a la sienne */
+const FMT_FR = { ...DISC_FR, MR: "Relais mixte" };
+const FMT_ORDER = ["SP", "PU", "IN", "SI", "MS", "RL", "MR", "SR", "SS"];
+const fmtKey = r => { const d = r.DisciplineId || r.RaceId.slice(-2); return d === "RL" && (r.catId || r.RaceId.slice(-4, -2)) === "MX" ? "MR" : d; };
 const DURATION_MIN = {SP:45,PU:45,IN:60,SI:50,MS:45,RL:80,SR:45,SS:30};
 const GENDER_FR = {SW:"femmes",SM:"hommes",MX:"mixte"};
 const raceCat = r => r.catId || r.RaceId.slice(-4, -2);
@@ -1630,7 +1635,12 @@ const CAT_SHORT = {SW:"F",SM:"H",MX:"Mixte"};
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const ym = d => ymd(d).slice(0, 7);
 
-async function viewCalendar(root) {
+async function viewCalendar(root, preset) {
+  if (preset && FMT_FR[preset]) {
+    // Arrivée depuis « Les formats de course » : on filtre sur ce format puis on nettoie l'adresse.
+    LS.set("cal", { ...LS.get("cal", { g: "all", disc: [], hidePast: true }), g: "all", disc: [preset] });
+    history.replaceState(null, "", "#/calendrier");
+  }
   const render = () => viewCalendar(root);
   const sid = META.currentSeason && seasonIds().includes(META.currentSeason) ? META.currentSeason : seasonIds()[0];
   const f = LS.get("cal", { g: "all", disc: [], hidePast: true });
@@ -1703,7 +1713,7 @@ async function viewCalendar(root) {
   const now = Date.now();
   const isPast = x => x.d.getTime() + 2 * 3600e3 < now;
   const inCat = x => f.g === "all" || raceCat(x.r) === f.g || raceCat(x.r) === "MX";
-  const inDisc = x => !f.disc.length || f.disc.includes(raceDisc(x.r));
+  const inDisc = x => !f.disc.length || f.disc.includes(fmtKey(x.r));
   const seasonItems = all.filter(inCat);
   const shown = all.filter(x => inCat(x) && inDisc(x));            // calendrier mensuel : passé compris
   const list = shown.filter(x => !f.hidePast || !isPast(x));        // liste
@@ -1714,9 +1724,11 @@ async function viewCalendar(root) {
     <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc(CAT_SHORT[raceCat(x.r)] || "")}</span></span>${status(x)}</div>`;
 
   /* Filtres d'épreuves */
-  const ORDER = ["SP","PU","IN","SI","MS","RL","SR","SS"];
-  const discs = [...new Set(all.map(x => raceDisc(x.r)))].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
-  $("#disc-chips", root).innerHTML = discs.map(d => `<button class="chip${f.disc.includes(d) ? " on" : ""}" data-d="${d}">${esc(DISC_FR[d] || d)}</button>`).join("");
+  const discs = [...new Set([...all.map(x => fmtKey(x.r)), ...f.disc])].sort((a, b) => FMT_ORDER.indexOf(a) - FMT_ORDER.indexOf(b));
+  $("#disc-chips", root).innerHTML = discs.map(d => `<button class="chip${f.disc.includes(d) ? " on" : ""}" data-d="${d}" aria-pressed="${f.disc.includes(d)}">${esc(FMT_FR[d] || d)}</button>`).join("")
+    + (f.disc.length || f.g !== "all" ? `<button class="chip clear" id="clear-filters" type="button">Effacer les filtres ×</button>` : "");
+  const clr = $("#clear-filters", root);
+  if (clr) clr.addEventListener("click", () => { LS.set("cal", { ...f, g: "all", disc: [] }); render(); });
   root.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
     const d = b.dataset.d; const disc = f.disc.includes(d) ? f.disc.filter(x => x !== d) : [...f.disc, d]; LS.set("cal", { ...f, disc }); render(); }));
 
@@ -2136,7 +2148,7 @@ async function viewDiscover(root) {
         <span class="fc-b"><small>Tirs</small>${f.shoot.length}${f.legs ? " par relayeur" : ""}</span><span class="fc-b"><small>Faute</small>${esc(PEN[f.pen].short)}</span></div></div>
       ${formatStrip(f)}
       <div class="dgrid fc-txt"><p><b>Départ.</b> ${esc(f.start)}.<br>${esc(f.what)}</p><p class="analogy">${esc(f.like)}</p></div>
-      <p class="small"><a href="#/courses">Voir les courses de ce format au calendrier →</a></p>`;
+      <p class="small"><a href="#/calendrier/${f.id}">Voir les courses de ce format →</a></p>`;
   };
   root.querySelectorAll("[data-fmt]").forEach(b => b.addEventListener("click", () => { showFmt(b.dataset.fmt); if (b.classList.contains("linkish")) $("#fmt-card", root).scrollIntoView({ behavior: "smooth", block: "center" }); }));
   showFmt(FORMATS.some(f => f.id === fmtSel) ? fmtSel : "SP");
@@ -2346,7 +2358,7 @@ async function route() {
   }
   const a = decodeURIComponent(arg || "");
   if (page === "decouvrir") return viewDiscover(root);
-  if (page === "calendrier") return viewCalendar(root);
+  if (page === "calendrier") return viewCalendar(root, a);
   if (page === "nations") return viewNations(root);
   if (page === "nation" && a) return viewNation(root, a);
   if (page === "courses") return viewCalendar(root);
