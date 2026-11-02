@@ -206,6 +206,10 @@ a.btn:hover{text-decoration:none}
 .cal-race .n{min-width:0}
 .cal-race .n a{font-weight:600;color:var(--ink)}
 .cal-race .acts{display:flex;gap:6px}
+.rstat{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+a.rstat.done{color:var(--accent)}
+.ev-no{display:inline-block;min-width:2.2em;font-family:var(--display);font-weight:700;font-size:18px;color:var(--muted);margin-right:4px}
+#list-panel .events{gap:12px}
 .cal-race.past{opacity:.55}
 .g-SW{color:#B4236B}.g-SM{color:var(--accent)}.g-MX{color:var(--good)}
 :root[data-theme="dark"] .g-SW{color:#F07AB4}
@@ -511,7 +515,7 @@ nav.tabs{order:2}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:6px;font-size:14px;z-index:40}
-@media (max-width:600px){.cal-day{grid-template-columns:1fr;gap:2px}.cal-date{padding-top:0}.cal-race{grid-template-columns:48px 1fr}.cal-race .acts{grid-column:2}.next .when{font-size:34px}}
+@media (max-width:600px){.cal-day{grid-template-columns:1fr;gap:2px}.cal-date{padding-top:0}.cal-race{grid-template-columns:48px 1fr}.cal-race .acts,.cal-race .rstat{grid-column:2}.next .when{font-size:34px}}
 </style>
 </head>
 <body>
@@ -732,10 +736,6 @@ async function nationTable(sid) {
   return { list: Object.values(by).sort((a, b) => b.pts - a.pts || (b.w + b.m) - (a.w + a.m)), s, w, m };
 }
 /* Sous-onglets de la section Athlètes */
-function raceTabs(active) {
-  const t = [["calendrier", "#/calendrier", "Calendrier"], ["resultats", "#/courses", "Résultats"]];
-  return `<nav class="subtabs" aria-label="Section Courses">${t.map(([k, h, l]) => `<a href="${h}"${k === active ? ' class="on" aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
-}
 function athTabs(active) {
   const t = [["recherche", "#/recherche", "Rechercher"], ["nations", "#/nations", "Nations"], ["comparer", "#/comparer", "Comparer"]];
   return `<nav class="subtabs" aria-label="Section Athlètes">${t.map(([k, h, l]) => `<a href="${h}"${k === active ? ' class="on" aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
@@ -784,37 +784,12 @@ async function viewNation(root, nat) {
 }
 
 /* ================================================================ courses */
-async function viewCourses(root) {
-  const render = () => viewCourses(root);
-  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow">Courses · toutes les saisons</span><h1>Résultats</h1></div>
-    <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
-  bindCommon(root, render);
-  try {
-    const s = await season(state.season);
-    const ev = s.events || [];
-    if (!ev.length) { $("#out", root).innerHTML = `<div class="note">Calendrier non publié pour ${seasonLabel(state.season)}.</div>`; return; }
-    const today = new Date().toISOString().slice(0, 10);
-    let nWc = 0;
-    $("#out", root).innerHTML = `<div class="events">${ev.map(e => {
-      const now = String(e.StartDate).slice(0, 10) <= today && today <= String(e.EndDate).slice(0, 10);
-      const wc = /RLCP/.test(e.EventId); if (wc) nWc++;
-      const label = wc ? String(nWc).padStart(2, "0") : (/RLOG/.test(e.EventId) ? "JO" : /RLCH/.test(e.EventId) ? "CM" : "·");
-      const races = (e.races || []).map(c => `<div class="race"><div><a class="nm" href="#/course/${esc(c.RaceId)}">${esc(c.ShortDescription || c.Description || c.RaceId)}</a></div><div class="small muted">${fmtDateTime(c.StartTime)}</div></div>`).join("");
-      return `<div class="ev${now ? " now" : ""}"><button aria-expanded="${now}"><span class="no">${label}</span>
-        <span><span class="pl">${esc(e.ShortDescription || e.Organizer || e.EventId)}</span> ${natHTML(e.Nat)}<br><span class="small muted">${fmtDate(e.StartDate)} – ${fmtDate(e.EndDate)}${!wc ? " · " + esc(e.Description || "") : ""}</span></span>
-        ${now ? '<span class="tag live">En cours</span>' : '<span class="muted" aria-hidden="true">▾</span>'}</button><div class="races"${now ? "" : " hidden"}>${races || '<div class="muted small">Aucune course publiée.</div>'}</div></div>`; }).join("")}</div>`;
-    root.querySelectorAll(".ev>button").forEach(b => b.addEventListener("click", () => {
-      const box = b.nextElementSibling; box.hidden = !box.hidden; b.setAttribute("aria-expanded", String(!box.hidden));
-    }));
-  } catch (e) { $("#out", root).innerHTML = errorHTML(e); }
-}
-
 let liveTimer = null;
 async function viewRace(root, rid) {
   const code = rid.slice(-2), g = rid.slice(-4, -2);
   const sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
   const lvl = /RLOG/.test(rid) ? "OWG" : /RLCH/.test(rid) ? "WCH" : "WC";
-  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow"><a href="#/courses">Résultats</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/calendrier">Courses</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
     <div class="controls"><label class="small"><input type="checkbox" id="live"> Recharger toutes les 2 min</label><span class="small muted" id="stamp"></span><a class="ext" href="https://www.biathlonresults.com/" target="_blank" rel="noopener">Direct officiel ↗</a></div>
     <div id="out">${loadingHTML()}</div><div class="cmpbar" id="cmpbar" hidden><span id="cmpbar-txt"></span><button class="btn ghost sm" id="cmpbar-clear" type="button">Effacer</button><a class="btn sm" id="cmpbar-go" href="#">Comparer</a></div></div>`;
   const picked = new Set(LS.get("racePick:" + rid, []));
@@ -1473,7 +1448,7 @@ async function viewRaceCompare(root, rid, idsStr) {
   const ids = [...new Set(idsStr.split(",").map(x => x.trim()).filter(Boolean))].slice(0, MAX_CMP);
   const code = rid.slice(-2), sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
   const go = list => { location.hash = list.length >= 2 ? `#/course/${rid}/${list.join(",")}` : `#/course/${rid}`; };
-  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow"><a href="#/course/${esc(rid)}">← Résultats de la course</a> · ${seasonLabel(sid)}</span>
+  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/course/${esc(rid)}">← Résultats de la course</a> · ${seasonLabel(sid)}</span>
     <h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
     <div class="picker"><div class="chips" id="picked"></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap" id="adder"></div></div>
     <div id="out">${loadingHTML()}</div></div>`;
@@ -1667,10 +1642,12 @@ async function viewCalendar(root) {
   const feedName = `Biathlon ${seasonLabel(sid)}${f.g === "SW" ? " – femmes" : f.g === "SM" ? " – hommes" : ""}`;
   const olOpen = LS.get("olOpen", false), olKind = LS.get("olKind", "office");
   const importName = `biathlon-${seasonLabel(sid).replace("/", "-")}${f.g === "SW" ? "-femmes" : f.g === "SM" ? "-hommes" : ""}.ics`;
+  const listOpen = LS.get("calListOpen", true);
+  const listSid = seasonIds().includes(LS.get("calListSeason", sid)) ? LS.get("calListSeason", sid) : sid;
   const scope = f.g === "all" ? "toutes les courses" : f.g === "SW" ? "les courses femmes et les relais mixtes" : "les courses hommes et les relais mixtes";
   root.innerHTML = `<div class="stack">
-    ${raceTabs("calendrier")}<div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
-      <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}.</p></div>
+    <div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Courses</h1>
+      <p class="lede">Le calendrier ${seasonLabel(sid)} et les résultats de toutes les saisons archivées, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}.</p></div>
     <div id="next"></div>
     <div class="cal-filters" id="filters">
       <div class="seg" role="group" aria-label="Catégorie"><button data-cg="all" class="${f.g === "all" ? "on" : ""}">Tout</button><button data-cg="SW" class="${f.g === "SW" ? "on" : ""}">Femmes</button><button data-cg="SM" class="${f.g === "SM" ? "on" : ""}">Hommes</button></div>
@@ -1678,9 +1655,14 @@ async function viewCalendar(root) {
       <button class="btn ghost sm" id="jump-agenda" type="button">Ajouter à mon agenda ↓</button>
     </div>
     <section class="panel" id="month-panel"><div class="pb">${loadingHTML()}</div></section>
-    <section class="panel" id="list-panel"><div class="ph"><h2>Toutes les courses</h2>
-      <label class="small"><input type="checkbox" id="hide-past"${f.hidePast ? " checked" : ""}> Masquer les courses passées</label></div>
-      <div id="out" class="pb">${loadingHTML()}</div></section>
+    <section class="panel browse${listOpen ? "" : " closed"}" id="list-panel">
+      <h2 class="fold-h"><button type="button" id="list-toggle" aria-expanded="${listOpen}" aria-controls="list-body">
+        <span class="fold-t">Toutes les courses</span><span class="small muted fold-c" id="list-count"></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
+      <div class="pb" id="list-body"${listOpen ? "" : " hidden"}>
+        <div class="controls" style="margin-bottom:12px"><select id="list-season" aria-label="Saison">${seasonIds().map(x => `<option value="${x}"${x === listSid ? " selected" : ""}>${seasonLabel(x)}${x === sid ? " (en cours)" : ""}</option>`).join("")}</select>
+          <label class="small" id="hide-past-l"${listSid === sid ? "" : " hidden"}><input type="checkbox" id="hide-past"${f.hidePast ? " checked" : ""}> Masquer les courses passées</label></div>
+        <div id="out">${loadingHTML()}</div></div></section>
 
     <section class="panel" id="agenda"><div class="ph"><h2>Ajouter à mon agenda</h2><span class="small muted">Selon le filtre choisi : ${esc(scope)}</span></div>
       <div class="pb subs">
@@ -1715,7 +1697,8 @@ async function viewCalendar(root) {
   const all = [];
   (s.events || []).forEach(e => (e.races || []).forEach(r => { if (r.StartTime) all.push({ r, e, d: new Date(r.StartTime) }); }));
   all.sort((a, b) => a.d - b.d);
-  if (!all.length) { $("#month-panel", root).hidden = true; $("#out", root).innerHTML = `<div class="note">Le calendrier ${seasonLabel(sid)} n'est pas encore publié par l'IBU.</div>`; return; }
+  const noCal = !all.length;
+  if (noCal) $("#month-panel", root).innerHTML = `<div class="pb"><div class="note">Le calendrier ${seasonLabel(sid)} n'est pas encore publié par l'IBU. Les saisons précédentes restent consultables plus bas.</div></div>`;
 
   const now = Date.now();
   const isPast = x => x.d.getTime() + 2 * 3600e3 < now;
@@ -1725,10 +1708,10 @@ async function viewCalendar(root) {
   const shown = all.filter(x => inCat(x) && inDisc(x));            // calendrier mensuel : passé compris
   const list = shown.filter(x => !f.hidePast || !isPast(x));        // liste
   const icsHref = r => "data/calendar/races/" + encodeURIComponent(r.RaceId) + ".ics";
-  const actions = x => `<span class="acts"><a class="btn ghost sm" href="${icsHref(x.r)}" aria-label="Ajouter ${esc(raceTitle(x.r))} à mon agenda">Agenda</a><a class="btn ghost sm" href="${esc(outlookEventLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Outlook">Outlook</a><a class="btn ghost sm" href="${esc(googleLink(x.r, x.e))}" target="_blank" rel="noopener" aria-label="Ajouter ${esc(raceTitle(x.r))} à Google Agenda">Google</a></span>`;
+  const status = x => isPast(x) ? `<a class="rstat done" href="#/course/${esc(x.r.RaceId)}">Résultats →</a>` : `<span class="rstat">À venir</span>`;
   const raceRow = x => `<div class="cal-race${isPast(x) ? " past" : ""}">
     <span class="t">${esc(x.d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }))}</span>
-    <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc(CAT_SHORT[raceCat(x.r)] || "")}</span></span>${actions(x)}</div>`;
+    <span class="n"><a href="#/course/${esc(x.r.RaceId)}">${esc(raceTitle(x.r))}</a><span class="gtag g-${raceCat(x.r)}">${esc(CAT_SHORT[raceCat(x.r)] || "")}</span></span>${status(x)}</div>`;
 
   /* Filtres d'épreuves */
   const ORDER = ["SP","PU","IN","SI","MS","RL","SR","SS"];
@@ -1805,7 +1788,7 @@ async function viewCalendar(root) {
       $("#dday", root).innerHTML = dayDetail(selected);
     }));
   };
-  drawMonth();
+  if (!noCal) drawMonth();
 
   /* Liste complète */
   const dl = $("#dl-sel", root);
@@ -1820,18 +1803,45 @@ async function viewCalendar(root) {
     toast(`${seasonItems.length} courses téléchargées : importez le fichier dans Outlook`);
   });
 
-  if (!list.length) { $("#out", root).innerHTML = `<div class="note">Aucune course ne correspond aux filtres.</div>`; return; }
-  const dayKey = d => ymd(d);
-  const groups = [];
-  list.forEach(x => { let g = groups.find(g => g.e.EventId === x.e.EventId); if (!g) groups.push(g = { e: x.e, days: [] });
-    let day = g.days.find(d => d.k === dayKey(x.d)); if (!day) g.days.push(day = { k: dayKey(x.d), d: x.d, items: [] }); day.items.push(x); });
-  $("#out", root).innerHTML = `<div class="events">${groups.map(g => `<section class="ev">
-      <div class="ev-head"><span><span class="pl">${esc(g.e.ShortDescription || g.e.Organizer || "")}</span> ${natHTML(g.e.Nat)}${eventKind(g.e.EventId) !== "Coupe du monde" ? ` <span class="tag live">${esc(eventKind(g.e.EventId))}</span>` : ""}</span>
+  /* Volet « Toutes les courses » : n'importe quelle saison archivée */
+  $("#list-toggle", root).addEventListener("click", ev => {
+    const body = $("#list-body", root), open = body.hidden;
+    body.hidden = !open; $("#list-panel", root).classList.toggle("closed", !open); LS.set("calListOpen", open);
+    ev.currentTarget.setAttribute("aria-expanded", String(open));
+  });
+  const drawList = async lsid => {
+    LS.set("calListSeason", lsid);
+    $("#hide-past-l", root).hidden = lsid !== sid;
+    const out = $("#out", root);
+    let items = list;
+    if (lsid !== sid) {
+      out.innerHTML = loadingHTML();
+      let other; try { other = await season(lsid); } catch (e) { out.innerHTML = errorHTML(e); return; }
+      if ($("#list-season", root).value !== lsid) return;
+      items = [];
+      (other.events || []).forEach(e => (e.races || []).forEach(r => { if (r.StartTime) items.push({ r, e, d: new Date(r.StartTime) }); }));
+      items = items.filter(x => inCat(x) && inDisc(x)).sort((a, b) => a.d - b.d);
+    }
+    const nb = items.length, nEv = new Set(items.map(x => x.e.EventId)).size;
+    $("#list-count", root).textContent = `${seasonLabel(lsid)} · ${nEv} étape${nEv > 1 ? "s" : ""}, ${nb} course${nb > 1 ? "s" : ""}`;
+    if (!nb) { out.innerHTML = `<div class="note">${lsid === sid && f.hidePast && shown.length ? "Toutes les courses correspondant aux filtres sont passées : décochez « Masquer les courses passées »." : "Aucune course ne correspond aux filtres pour cette saison."}</div>`; return; }
+    const today = ymd(new Date());
+    const groups = [];
+    items.forEach(x => { let g = groups.find(g => g.e.EventId === x.e.EventId); if (!g) groups.push(g = { e: x.e, days: [] });
+      let day = g.days.find(d => d.k === ymd(x.d)); if (!day) g.days.push(day = { k: ymd(x.d), d: x.d, items: [] }); day.items.push(x); });
+    let nWc = 0;
+    out.innerHTML = `<div class="events">${groups.map(g => {
+      const wc = /RLCP/.test(g.e.EventId); if (wc) nWc++;
+      const now = String(g.e.StartDate).slice(0, 10) <= today && today <= String(g.e.EndDate).slice(0, 10);
+      return `<section class="ev${now ? " now" : ""}">
+      <div class="ev-head"><span><span class="ev-no">${wc ? String(nWc).padStart(2, "0") : /RLOG/.test(g.e.EventId) ? "JO" : "CM"}</span><span class="pl">${esc(g.e.ShortDescription || g.e.Organizer || "")}</span> ${natHTML(g.e.Nat)}${eventKind(g.e.EventId) !== "Coupe du monde" ? ` <span class="tag live">${esc(eventKind(g.e.EventId))}</span>` : ""}${now ? ' <span class="tag live">En cours</span>' : ""}</span>
         <span class="small muted">${fmtDate(g.e.StartDate)} – ${fmtDate(g.e.EndDate)}</span></div>
-      ${g.days.map(day => `<div class="cal-day"><div class="cal-date">${esc(day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }))}<small>${esc(day.d.toLocaleDateString("fr-FR", { month: "long" }))}</small></div>
+      ${g.days.map(day => `<div class="cal-day"><div class="cal-date">${esc(day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }))}<small>${esc(day.d.toLocaleDateString("fr-FR", { month: "long", ...(lsid !== sid ? { year: "numeric" } : {}) }))}</small></div>
         <div class="cal-races">${day.items.map(raceRow).join("")}</div></div>`).join("")}
-    </section>`).join("")}</div>
-    <p class="small muted" style="margin:12px 0 0">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
+    </section>`; }).join("")}</div>`;
+  };
+  $("#list-season", root).addEventListener("change", e => drawList(e.target.value));
+  drawList(listSid);
 }
 
 /* ================================================================ découvrir */
@@ -2339,7 +2349,7 @@ async function route() {
   if (page === "calendrier") return viewCalendar(root);
   if (page === "nations") return viewNations(root);
   if (page === "nation" && a) return viewNation(root, a);
-  if (page === "courses") return viewCourses(root);
+  if (page === "courses") return viewCalendar(root);
   if (page === "course" && a && arg2) return viewRaceCompare(root, a, decodeURIComponent(arg2));
   if (page === "course" && a) return viewRace(root, a);
   if (page === "recherche") return viewSearch(root);
