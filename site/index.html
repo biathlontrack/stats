@@ -346,6 +346,12 @@ nav.tabs{order:2}
 .medals.sm{justify-content:flex-end;gap:8px;flex-wrap:nowrap}
 .medals.sm .mdl b{font-family:var(--mono);font-size:14px;font-weight:600}
 .medals.sm .medal-ico{width:14px;height:19px}
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:-8px;overflow-x:auto;scrollbar-width:none}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs a{flex:none;padding:10px 14px;font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.subtabs a:hover{color:var(--ink);text-decoration:none}
+.subtabs a.on{color:var(--ink);border-bottom-color:var(--accent)}
+@media (max-width:600px){.subtabs a{padding:9px 10px;font-size:16px}}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -360,10 +366,8 @@ nav.tabs{order:2}
     <nav class="tabs" aria-label="Sections">
       <a href="#/classements" data-tab="classements">Classements</a>
       <a href="#/calendrier" data-tab="calendrier">Calendrier</a>
-      <a href="#/nations" data-tab="nations">Nations</a>
       <a href="#/courses" data-tab="courses">Courses</a>
-      <a href="#/recherche" data-tab="recherche">Athlètes</a>
-      <a href="#/comparer" data-tab="comparer">Comparer</a>
+      <a href="#/recherche" data-tab="athletes">Athlètes</a>
     </nav>
     <div class="theme" role="group" aria-label="Apparence du site">
       <button type="button" data-theme-set="light" title="Mode clair"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg><span>Clair</span></button>
@@ -572,9 +576,15 @@ async function nationTable(sid) {
   pts(w); pts(m);
   return { list: Object.values(by).sort((a, b) => b.pts - a.pts || (b.w + b.m) - (a.w + a.m)), s, w, m };
 }
+/* Sous-onglets de la section Athlètes */
+function athTabs(active) {
+  const t = [["recherche", "#/recherche", "Rechercher"], ["nations", "#/nations", "Nations"], ["comparer", "#/comparer", "Comparer"]];
+  return `<nav class="subtabs" aria-label="Section Athlètes">${t.map(([k, h, l]) => `<a href="${h}"${k === active ? ' class="on" aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
+}
+
 async function viewNations(root) {
   const render = () => viewNations(root);
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Coupe du monde</span><h1>Nations</h1>
+  root.innerHTML = `<div class="stack">${athTabs("nations")}<div class="head"><span class="eyebrow">Coupe du monde</span><h1>Nations</h1>
     <p class="lede">Points des athlètes de chaque pays au classement général et nombre d'athlètes engagés en courses individuelles. Touchez une nation pour voir ses athlètes.</p></div>
     <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
   bindCommon(root, render);
@@ -592,7 +602,7 @@ async function viewNations(root) {
 }
 async function viewNation(root, nat) {
   const render = () => viewNation(root, nat);
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/nations">Nations</a> · Coupe du monde</span>
+  root.innerHTML = `<div class="stack">${athTabs("nations")}<div class="head"><span class="eyebrow"><a href="#/nations">Nations</a> · Coupe du monde</span>
     <h1><span aria-hidden="true">${flag(nat)}</span> ${esc(natName(nat))}</h1></div>
     <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
   bindCommon(root, render);
@@ -706,7 +716,7 @@ async function viewRace(root, rid) {
 /* ================================================================ recherche */
 async function viewSearch(root) {
   const last = LS.get("search2", { q: "", nat: "", g: "" });
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Athlètes</h1>
+  root.innerHTML = `<div class="stack">${athTabs("recherche")}<div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Rechercher un athlète</h1>
     <p class="lede">Tous les athlètes classés ou engagés en Coupe du monde, Mondiaux ou JO sur les saisons archivées.</p></div>
     <form class="controls" id="sf" role="search"><input type="search" id="q" placeholder="Nom ou prénom" value="${esc(last.q)}" aria-label="Nom ou prénom" autocomplete="off">
       <select id="nat" aria-label="Nation"><option value="">Toutes les nations</option></select>
@@ -868,7 +878,7 @@ async function viewAthlete(root, id) {
   const avail = new Set(seasonIds());
   const statSeasons = seasons.filter(s => avail.has(s) && topInd.some(r => r.sid === s));
 
-  root.innerHTML = `<div class="stack">
+  root.innerHTML = `<div class="stack">${athTabs("")}
     <div class="profile">
       ${bio.PhotoURI ? `<img class="photo" src="${esc(bio.PhotoURI)}" alt="Portrait de ${esc(name)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="photo ph0" aria-hidden="true">${esc(String(name).trim().charAt(0))}</div>`}
       <div class="head" style="min-width:0"><span class="eyebrow"><a href="#/nation/${esc(nat)}">${flag(nat)} ${esc(natName(nat))}</a> · ${gender === "SW" ? "Femmes" : "Hommes"}</span>
@@ -1051,7 +1061,7 @@ async function viewCompare(root, arg) {
   let ids = [...new Set(String(arg || "").split(",").map(s => s.trim()).filter(Boolean))].slice(0, MAX_CMP);
   const bf = LS.get("cmpBrowseF", { q: "", nat: "", g: "" });
   const browseOpen = LS.get("cmpBrowse", true);
-  root.innerHTML = `<div class="stack">
+  root.innerHTML = `<div class="stack">${athTabs("comparer")}
     <div class="head"><span class="eyebrow">Fiches athlètes</span><h1>Comparer</h1>
       <p class="lede">Choisissez de 2 à ${MAX_CMP} athlètes pour comparer leur palmarès, leurs statistiques saison par saison et leurs face-à-face.</p></div>
     <div class="picker">
@@ -1681,7 +1691,7 @@ async function route() {
   clearInterval(liveTimer); liveTimer = null; CHARTS.clear();
   const root = $("#view");
   const [page, arg, arg2] = location.hash.replace(/^#\/?/, "").split("/");
-  const tab = { comparer: "comparer", calendrier: "calendrier", nations: "nations", nation: "nations", courses: "courses", course: "courses", recherche: "recherche", athlete: "recherche" }[page] || "classements";
+  const tab = { calendrier: "calendrier", courses: "courses", course: "courses", recherche: "athletes", athlete: "athletes", nations: "athletes", nation: "athletes", comparer: "athletes" }[page] || "classements";
   document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
   if (!META) {
