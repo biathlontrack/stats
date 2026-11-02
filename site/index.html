@@ -520,8 +520,7 @@ nav.tabs{order:2}
     <a class="brand" href="#/classements" aria-label="Biathlon Datacenter, accueil"><span class="t5" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Biathlon Datacenter</a>
     <nav class="tabs" aria-label="Sections">
       <a href="#/classements" data-tab="classements">Classements</a>
-      <a href="#/calendrier" data-tab="calendrier">Calendrier</a>
-      <a href="#/courses" data-tab="courses">Courses</a>
+      <a href="#/calendrier" data-tab="courses">Courses</a>
       <a href="#/recherche" data-tab="athletes">Athlètes</a>
       <a href="#/decouvrir" data-tab="decouvrir">Découvrir</a>
     </nav>
@@ -733,6 +732,10 @@ async function nationTable(sid) {
   return { list: Object.values(by).sort((a, b) => b.pts - a.pts || (b.w + b.m) - (a.w + a.m)), s, w, m };
 }
 /* Sous-onglets de la section Athlètes */
+function raceTabs(active) {
+  const t = [["calendrier", "#/calendrier", "Calendrier"], ["resultats", "#/courses", "Résultats"]];
+  return `<nav class="subtabs" aria-label="Section Courses">${t.map(([k, h, l]) => `<a href="${h}"${k === active ? ' class="on" aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
+}
 function athTabs(active) {
   const t = [["recherche", "#/recherche", "Rechercher"], ["nations", "#/nations", "Nations"], ["comparer", "#/comparer", "Comparer"]];
   return `<nav class="subtabs" aria-label="Section Athlètes">${t.map(([k, h, l]) => `<a href="${h}"${k === active ? ' class="on" aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
@@ -783,7 +786,7 @@ async function viewNation(root, nat) {
 /* ================================================================ courses */
 async function viewCourses(root) {
   const render = () => viewCourses(root);
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow">Calendrier et résultats</span><h1>Courses</h1></div>
+  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow">Courses · toutes les saisons</span><h1>Résultats</h1></div>
     <div class="controls">${seasonSelect()}</div><div id="out">${loadingHTML()}</div></div>`;
   bindCommon(root, render);
   try {
@@ -811,7 +814,7 @@ async function viewRace(root, rid) {
   const code = rid.slice(-2), g = rid.slice(-4, -2);
   const sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
   const lvl = /RLOG/.test(rid) ? "OWG" : /RLCH/.test(rid) ? "WCH" : "WC";
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/courses">Courses</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
+  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow"><a href="#/courses">Résultats</a> · ${seasonLabel(sid)} · ${esc(levelName(lvl))}</span><h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
     <div class="controls"><label class="small"><input type="checkbox" id="live"> Recharger toutes les 2 min</label><span class="small muted" id="stamp"></span><a class="ext" href="https://www.biathlonresults.com/" target="_blank" rel="noopener">Direct officiel ↗</a></div>
     <div id="out">${loadingHTML()}</div><div class="cmpbar" id="cmpbar" hidden><span id="cmpbar-txt"></span><button class="btn ghost sm" id="cmpbar-clear" type="button">Effacer</button><a class="btn sm" id="cmpbar-go" href="#">Comparer</a></div></div>`;
   const picked = new Set(LS.get("racePick:" + rid, []));
@@ -1470,7 +1473,7 @@ async function viewRaceCompare(root, rid, idsStr) {
   const ids = [...new Set(idsStr.split(",").map(x => x.trim()).filter(Boolean))].slice(0, MAX_CMP);
   const code = rid.slice(-2), sid = /^BT\d{4}/.test(rid) ? rid.slice(2, 6) : "";
   const go = list => { location.hash = list.length >= 2 ? `#/course/${rid}/${list.join(",")}` : `#/course/${rid}`; };
-  root.innerHTML = `<div class="stack"><div class="head"><span class="eyebrow"><a href="#/course/${esc(rid)}">← Résultats de la course</a> · ${seasonLabel(sid)}</span>
+  root.innerHTML = `<div class="stack">${raceTabs("resultats")}<div class="head"><span class="eyebrow"><a href="#/course/${esc(rid)}">← Résultats de la course</a> · ${seasonLabel(sid)}</span>
     <h1 id="rtitle">${esc(DISC[code] || rid)}</h1><p class="lede" id="rsub"></p></div>
     <div class="picker"><div class="chips" id="picked"></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap" id="adder"></div></div>
     <div id="out">${loadingHTML()}</div></div>`;
@@ -1666,7 +1669,7 @@ async function viewCalendar(root) {
   const importName = `biathlon-${seasonLabel(sid).replace("/", "-")}${f.g === "SW" ? "-femmes" : f.g === "SM" ? "-hommes" : ""}.ics`;
   const scope = f.g === "all" ? "toutes les courses" : f.g === "SW" ? "les courses femmes et les relais mixtes" : "les courses hommes et les relais mixtes";
   root.innerHTML = `<div class="stack">
-    <div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
+    ${raceTabs("calendrier")}<div class="head"><span class="eyebrow">Coupe du monde, Mondiaux et JO</span><h1>Calendrier ${seasonLabel(sid)}</h1>
       <p class="lede">Toutes les courses de la saison, aux heures de votre fuseau${tz ? ` (${esc(tz.replace(/_/g, " "))})` : ""}.</p></div>
     <div id="next"></div>
     <div class="cal-filters" id="filters">
@@ -2324,7 +2327,7 @@ async function route() {
   clearInterval(liveTimer); liveTimer = null; CHARTS.clear();
   const root = $("#view");
   const [page, arg, arg2] = location.hash.replace(/^#\/?/, "").split("/");
-  const tab = { decouvrir: "decouvrir", calendrier: "calendrier", courses: "courses", course: "courses", recherche: "athletes", athlete: "athletes", nations: "athletes", nation: "athletes", comparer: "athletes" }[page] || "classements";
+  const tab = { decouvrir: "decouvrir", calendrier: "courses", courses: "courses", course: "courses", recherche: "athletes", athlete: "athletes", nations: "athletes", nation: "athletes", comparer: "athletes" }[page] || "classements";
   document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
   if (!META) {
