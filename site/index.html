@@ -363,6 +363,150 @@ nav.tabs{order:2}
 .browse.closed .chev{transform:rotate(-90deg)}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
 @media (max-width:600px){.fold-t{font-size:20px}.fold-c{order:3;width:100%;margin:0}.chev{margin-left:auto}}
+/* Découvrir */
+.toc{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--hdr-h,0px));z-index:5;background:var(--snow);padding-block:8px;margin-block:-8px}
+.toc button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 6px;border:1px solid var(--line);border-radius:999px;background:var(--paper);font-size:13px;font-weight:600;cursor:pointer}
+.toc button span{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:11px;font-family:var(--mono)}
+.toc button:hover{border-color:var(--accent)}
+.toc button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dsec{scroll-margin-top:calc(var(--hdr-h,64px) + 56px)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:24px;align-items:start}
+.dgrid>*{min-width:0}
+.dtext p{margin:0 0 10px;max-width:62ch}
+.dtext h3,.discover h3{margin:0 0 8px}
+.facts-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;max-width:62ch}
+.analogy{background:var(--accent-soft);border-radius:8px;padding:12px 14px;margin:10px 0 0;font-size:15px;line-height:1.5}
+.analogy .stage{margin-right:8px;vertical-align:middle}
+/* stade */
+.stadium-wrap{display:flex;flex-direction:column;gap:10px}
+.stadium{width:100%;height:auto;display:block}
+.stadium .seg{fill:none;stroke:var(--line);stroke-width:10;stroke-linecap:round;transition:stroke .3s,opacity .3s}
+.stadium .seg-range rect{fill:var(--line-soft);stroke:var(--line);stroke-width:2}
+.stadium .seg-range line{stroke:var(--line);stroke-width:1.5}
+.stadium .seg-pen ellipse{fill:none;stroke-width:8}
+.stadium .seg-finish line{stroke-width:4;stroke:var(--ink)}
+.stadium text{fill:var(--muted);font:600 12px var(--body);stroke:none}
+.stadium .tgt{fill:#111A20;stroke:#000;stroke-width:1}
+.stadium .tgt.hit{fill:#F3F6F8;stroke:#9AA6AE}
+.stadium #runner{fill:var(--bib);stroke:var(--ink);stroke-width:2}
+.stadium[data-seg="ski"] .seg-ski{stroke:var(--accent)}
+.stadium[data-seg="range"] .seg-range rect{stroke:var(--accent);fill:var(--accent-soft)}
+.stadium[data-seg="pen"] .seg-pen ellipse{stroke:var(--red)}
+.stadium[data-seg="finish"] .seg-finish line{stroke:var(--accent)}
+.steps-ctl{display:flex;flex-wrap:wrap;gap:6px}
+.step-txt{margin:0;min-height:3em;font-size:15px}
+/* cibles */
+.tscale{width:100%;height:auto;margin-top:12px;display:block}
+.tscale .disc{fill:#111A20}
+.tscale .hitzone{fill:none;stroke:var(--bib);stroke-width:2.5;stroke-dasharray:4 3}
+.tscale .hitzone.full{stroke-dasharray:none}
+.tscale .obj{fill:var(--line-soft);stroke:var(--muted);stroke-width:1.5}
+.tscale .obj-P{fill:#C9A227;stroke:#8E7316}
+.tscale .obj-B{fill:#F7F7F2;stroke:#9AA6AE}
+.tscale .obj-C{fill:#C9D4DD;stroke:#8A98A3}
+.tscale text{fill:var(--ink);font:600 12px var(--body)}
+.tscale text.mm{fill:var(--muted);font:12px var(--mono)}
+.realsize{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:center;justify-content:space-between;border:1px dashed var(--line);border-radius:8px;padding:14px 16px}
+.realsize p{margin:4px 0 8px}
+.realsize input[type=range]{width:200px;max-width:100%;vertical-align:middle}
+.rs-dots{display:flex;gap:40px;align-items:flex-end}
+.rs-dots figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:60px}
+.rs-dot{display:block;border-radius:50%;background:var(--ink)}
+.rs-dots figcaption{font-size:12px;color:var(--muted)}
+/* jeu */
+.game-ctl{align-items:center}
+.game-ctl input[type=range]{width:160px}
+#game{width:100%;display:block;border-radius:8px;background:var(--snow);border:1px solid var(--line);cursor:crosshair;touch-action:manipulation}
+#game:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.heart{display:inline-block;color:var(--red);font-size:16px;transition:transform .08s}
+.heart.beat{transform:scale(1.35)}
+.game-res .stage{margin-right:6px}
+.game-res .analogy{margin:0}
+/* formats */
+.fmt-card{border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--snow)}
+.fc-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+.fc-head h3{margin:0;font-size:24px}
+.fc-badges{display:flex;flex-wrap:wrap;gap:8px}
+.fc-b{display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:14px;font-weight:500}
+.fc-b small{font-family:var(--body);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fc-txt p{margin:0}
+.fstrip{display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding-bottom:4px}
+.fs-leg{display:flex;flex-direction:column;gap:4px}
+.fs-legname{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fs-row{display:flex;align-items:stretch;gap:4px;min-width:max-content}
+.fs-flag{display:grid;place-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 4px}
+.fs-lap{display:grid;place-items:center;min-width:76px;padding:8px 10px;border-radius:6px;background:var(--accent);color:var(--paper);font-size:12.5px;font-weight:600}
+.fs-shot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;padding:4px 6px;border-radius:6px;border:2px solid var(--ink);background:var(--paper)}
+.fs-shot b{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.fs-S{border-color:var(--red)}
+.pos-ico{height:22px;width:auto;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+.pos-ico circle{fill:var(--ink)}
+.pos-ico .rifle{stroke:var(--red)}
+.fmt-table td,.fmt-table th{padding:7px 8px}
+.fmt-table td.num{white-space:nowrap}
+#d-penalites label.small{display:block;margin-top:12px}
+#d-penalites input[type=range]{width:100%;max-width:360px}
+.fmt-table tr.sel td{background:var(--accent-soft)}
+.linkish{all:unset;cursor:pointer;font-weight:600;color:var(--accent)}
+.linkish:hover{text-decoration:underline}
+.linkish:focus-visible{outline:2px solid var(--accent)}
+.hbars{display:flex;flex-direction:column;gap:8px}
+.hb-row{display:grid;grid-template-columns:minmax(110px,32%) 1fr;gap:10px;align-items:center}
+.hb-l{font-size:13px;font-weight:600}
+.hb-bars{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hb{display:flex;align-items:center;min-width:2px;height:20px;border-radius:3px;background:var(--line);position:relative}
+.hb b{position:absolute;left:calc(100% + 6px);white-space:nowrap;font:500 12px var(--mono);color:var(--ink)}
+.hb-w{background:#B4236B}.hb-m{background:var(--accent)}.hb-pen{background:var(--red)}.hb-hi{background:var(--bib)}
+:root[data-theme="dark"] .hb-w{background:#F07AB4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hb-w{background:#F07AB4}}
+.hb-row.hi .hb-l{color:var(--ink)}
+.hb-bars{padding-right:76px}
+/* pénalités */
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.stepper button{all:unset;width:36px;height:36px;display:grid;place-items:center;font-size:20px;cursor:pointer}
+.stepper button:hover{background:var(--line-soft)}
+.stepper button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.stepper output{min-width:34px;text-align:center;font:700 18px var(--mono)}
+.pen-bar{display:flex;gap:2px;height:18px;margin-top:12px;border-radius:4px;overflow:hidden;background:var(--line-soft)}
+.pen-bar span{background:var(--red)}
+.pen-bar i{background:transparent}
+.spare-vis{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.sv-row{display:grid;grid-template-columns:60px 1fr;align-items:center;gap:10px}
+.tg.spare{box-shadow:inset 0 0 0 2px var(--target),0 0 0 2px var(--good)}
+.ammo{display:flex;gap:4px;flex-wrap:wrap}
+.ammo .b{width:6px;height:18px;border-radius:3px 3px 1px 1px;background:var(--gold)}
+.ammo .b.sp{background:var(--good);margin-left:4px}
+/* vitesses */
+.time-out{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.to-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:4px 0}
+.to-row b{font-size:16px}
+/* points */
+.vbars{display:flex;align-items:flex-end;gap:2px;height:150px;border-bottom:1px solid var(--line)}
+.vb{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-width:2px;opacity:.75}
+.vb.top1{background:var(--gold);opacity:1}.vb.top2{background:var(--silver);opacity:1}.vb.top3{background:var(--bronze);opacity:1}
+.vb.cur{opacity:1;outline:2px solid var(--ink);outline-offset:1px}
+.vb-axis{display:flex;justify-content:space-between;font:12px var(--mono);color:var(--muted);margin-top:4px}
+.bibs{display:flex;flex-wrap:wrap;gap:16px}
+.bibs figure{margin:0;display:flex;gap:10px;align-items:center;flex:1 1 200px}
+.bibs svg{width:44px;height:52px;flex:none}
+.bibs svg text{font:700 18px var(--display);fill:#2B2300}
+.bibs figcaption{font-size:13.5px}
+/* quiz */
+.quiz{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:16px}
+.qq{margin:0 0 8px;font-weight:600}
+.qa{display:flex;flex-wrap:wrap;gap:6px}
+.qa .chip.good{background:var(--good);border-color:var(--good);color:#fff}
+.qa .chip.bad{background:var(--red);border-color:var(--red);color:#fff}
+.qa .chip.dim{opacity:.5}
+.qa .chip:disabled{cursor:default}
+.qwhy{margin:6px 0 0;color:var(--muted)}
+@media (max-width:600px){
+  .toc{position:static;margin:0}
+  .hb-row{grid-template-columns:1fr;gap:3px}
+  .stadium text{font-size:19px}
+  .stadium .lbl-ski{display:none}
+  .rs-dots{gap:28px}
+}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -379,6 +523,7 @@ nav.tabs{order:2}
       <a href="#/calendrier" data-tab="calendrier">Calendrier</a>
       <a href="#/courses" data-tab="courses">Courses</a>
       <a href="#/recherche" data-tab="athletes">Athlètes</a>
+      <a href="#/decouvrir" data-tab="decouvrir">Découvrir</a>
     </nav>
     <div class="theme" role="group" aria-label="Apparence du site">
       <button type="button" data-theme-set="light" title="Mode clair"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg><span>Clair</span></button>
@@ -1686,6 +1831,482 @@ async function viewCalendar(root) {
     <p class="small muted" style="margin:12px 0 0">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
 }
 
+/* ================================================================ découvrir */
+const FORMATS = [
+  { id: "SP", name: "Sprint", w: 7.5, m: 10, laps: 3, shoot: "PS", pen: "loop150", start: "Contre-la-montre : un départ toutes les 30 secondes",
+    what: "Le format le plus court en individuel. Les 60 premiers sont qualifiés pour la poursuite, qui part avec les écarts du sprint.",
+    like: "Comme un 400 m en athlétisme : tout va vite, une seule faute peut coûter le podium." },
+  { id: "PU", name: "Poursuite", w: 10, m: 12.5, laps: 5, shoot: "PPSS", pen: "loop150", start: "Départ en chasse : chacun part avec son retard du sprint (60 partants)",
+    what: "Le premier qui franchit la ligne d'arrivée gagne. Pas de calcul : ce que l'on voit à l'écran, c'est le classement.",
+    like: "Comme une étape de montagne du Tour de France : on part avec son retard et on le rattrape (ou pas) en direct." },
+  { id: "IN", name: "Individuel", w: 15, m: 20, laps: 5, shoot: "PSPS", pen: "min60", start: "Contre-la-montre : un départ toutes les 30 secondes",
+    what: "La course la plus longue et la plus ancienne. Chaque cible manquée ajoute une minute : la précision compte plus que tout.",
+    like: "Comme un examen où chaque erreur enlève beaucoup de points : mieux vaut viser juste que viser vite." },
+  { id: "SI", name: "Individuel court", w: 12.5, m: 15, laps: 5, shoot: "PSPS", pen: "s45", start: "Contre-la-montre : un départ toutes les 30 secondes",
+    what: "Une version raccourcie de l'individuel, plus récente : même ordre de tir, mais 45 secondes ajoutées par faute.",
+    like: "L'individuel en format compact : toujours exigeant au tir, un peu plus nerveux." },
+  { id: "MS", name: "Mass start", w: 12.5, m: 15, laps: 5, shoot: "PPSS", pen: "loop150", start: "Départ groupé des 30 meilleurs",
+    what: "Tout le monde part en même temps. Au premier tir, chacun prend le poste de son dossard ; ensuite, l'ordre d'arrivée au stand décide.",
+    like: "Comme un départ de marathon où l'on s'arrêterait quatre fois pour un concours de fléchettes." },
+  { id: "RL", name: "Relais", w: "4 × 6", m: "4 × 7,5", wn: 24, mn: 30, laps: 3, shoot: "PS", legs: 4, spare: true, pen: "loop150", start: "Départ groupé, 4 relayeurs par équipe",
+    what: "Chaque relayeur fait 3 tours et 2 tirs. À chaque tir, il dispose de 3 balles de pioche, chargées à la main, avant de devoir faire des tours de pénalité.",
+    like: "Comme un relais 4 × 400 m, avec un joker de 3 balles à chaque passage au tir." },
+  { id: "MR", name: "Relais mixte", w: "2 × 6", m: "2 × 6", laps: 3, shoot: "PS", legs: 4, spare: true, pen: "loop150", start: "Départ groupé, 2 femmes et 2 hommes par équipe",
+    what: "Même principe que le relais, mais chaque équipe aligne 2 femmes et 2 hommes, sur des relais de 6 km.",
+    like: "Un relais où filles et garçons se passent le témoin." },
+  { id: "SR", name: "Relais simple mixte", w: "2 relais", m: "2 relais", laps: 2, finalLap: true, shoot: "PS", legs: 4, spare: true, pen: "loop75", start: "Départ groupé, 1 femme et 1 homme par équipe",
+    what: "Une femme et un homme se relaient quatre fois sur des boucles de 1,5 km : à chaque relais, 2 tours et 2 tirs, et le passage se fait juste après le tir debout. Le dernier relayeur finit par un tour de plus : 6 km au total pour le premier athlète, 7,5 km pour le second. Le tour de pénalité ne fait que 75 m.",
+    like: "Un duo en ping-pong : on récupère pendant que l'autre court." },
+];
+const PEN = {
+  loop150: { label: "Tour de pénalité de 150 m", s: 25, short: "1 tour de 150 m" },
+  loop75: { label: "Tour de pénalité de 75 m", s: 13, short: "1 tour de 75 m" },
+  min60: { label: "1 minute ajoutée au temps", s: 60, short: "+1 minute" },
+  s45: { label: "45 secondes ajoutées au temps", s: 45, short: "+45 secondes" },
+};
+const WC_POINTS = [90, 75, 65, 55, 50, 45, 41, 37, 34, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+const MS_POINTS = WC_POINTS.slice(0, 21).concat([18, 16, 14, 12, 10, 8, 6, 4, 2]);
+const OBJECTS = [
+  { id: "coin", name: "une pièce de 1 €", mm: 23.25, f: true },
+  { id: "golf", name: "une balle de golf", mm: 42.7, f: true },
+  { id: "tennis", name: "une balle de tennis", mm: 67, f: true },
+  { id: "cd", name: "un CD", mm: 120 },
+  { id: "foot", name: "un ballon de football", mm: 220 },
+  { id: "pizza", name: "une pizza", mm: 300, f: true },
+];
+const LANDMARKS = [
+  { m: 3, t: "la largeur d'une petite pièce" }, { m: 12, t: "la longueur d'un bus" }, { m: 23.8, t: "la longueur d'un court de tennis" },
+  { m: 50, t: "la longueur d'une piscine olympique" }, { m: 105, t: "la longueur d'un terrain de football" }, { m: 330, t: "la hauteur de la tour Eiffel" },
+];
+const nearestLandmark = d => LANDMARKS.reduce((a, b) => Math.abs(Math.log(b.m / d)) < Math.abs(Math.log(a.m / d)) ? b : a);
+const nf = (v, d = 1) => (Math.round(v * 10 ** d) / 10 ** d).toString().replace(".", ",");
+const kmTxt = v => typeof v === "number" ? nf(v) + " km" : String(v).includes("×") ? v + " km" : v;
+
+/* Petites figures : tireur couché / debout */
+const ICON_P = `<svg class="pos-ico" viewBox="0 0 40 24" aria-hidden="true"><circle cx="31" cy="12" r="3.2"/><path d="M6 17 L27 13"/><path d="M27 13 L36 9"/><path d="M8 17 L4 21 M14 16 L12 21"/><path d="M24 11 L38 6" class="rifle"/></svg>`;
+const ICON_S = `<svg class="pos-ico" viewBox="0 0 24 40" aria-hidden="true"><circle cx="12" cy="6" r="3.2"/><path d="M12 10 V24 M12 24 L8 37 M12 24 L16 37 M12 13 L19 14"/><path d="M8 12 L23 15" class="rifle"/></svg>`;
+
+function formatStrip(fmt) {
+  const legs = fmt.legs || 1;
+  const leg = i => {
+    let h = "";
+    for (let l = 0; l < fmt.laps; l++) {
+      h += `<span class="fs-lap" title="Tour ${l + 1}">Tour ${l + 1}</span>`;
+      if (l < fmt.shoot.length) {
+        const p = fmt.shoot[l];
+        h += `<span class="fs-shot fs-${p}" title="${p === "P" ? "Tir couché" : "Tir debout"}">${p === "P" ? ICON_P : ICON_S}<b>${p === "P" ? "Couché" : "Debout"}</b></span>`;
+      }
+    }
+    if (fmt.finalLap && i === legs - 1) h += `<span class="fs-lap" title="Tour final">Tour final</span>`;
+    return `<div class="fs-leg">${legs > 1 ? `<span class="fs-legname">Relayeur ${i + 1}${fmt.id === "MR" ? (i < 2 ? " · F" : " · H") : fmt.id === "SR" ? (i % 2 ? " · H" : " · F") : ""}</span>` : ""}<div class="fs-row"><span class="fs-flag">${i === 0 ? "Départ" : "Relais"}</span>${h}<span class="fs-flag">${i === legs - 1 ? "Arrivée" : "→"}</span></div></div>`;
+  };
+  return `<div class="fstrip" role="img" aria-label="${esc(fmt.name)} : ${fmt.laps} tours et ${fmt.shoot.length} tirs ${legs > 1 ? "par relayeur" : ""}, ordre ${[...fmt.shoot].map(p => p === "P" ? "couché" : "debout").join(", ")}">${Array.from({ length: legs }, (_, i) => leg(i)).join("")}</div>`;
+}
+
+async function viewDiscover(root) {
+  document.documentElement.style.setProperty("--hdr-h", (document.querySelector("header.band")?.offsetHeight || 64) + "px");
+  const sections = [["d-principe", "Le principe"], ["d-cibles", "Les cibles"], ["d-jeu", "À vous de tirer"], ["d-formats", "Les formats"],
+    ["d-penalites", "Les pénalités"], ["d-vitesses", "Vitesses"], ["d-points", "Classement"], ["d-quiz", "Quiz"]];
+  const fmtSel = LS.get("dFmt", "SP");
+  root.innerHTML = `<div class="stack discover">
+    <div class="head"><span class="eyebrow">Comprendre le biathlon</span><h1>Découvrir</h1>
+      <p class="lede">Ski de fond et tir à la carabine, enchaînés à bout de souffle. Voici les règles, les formats de course et les ordres de grandeur, à manipuler pour mieux les comprendre.</p></div>
+    <nav class="toc" aria-label="Sommaire">${sections.map(([id, t], i) => `<button type="button" data-goto="${id}"><span>${i + 1}</span>${t}</button>`).join("")}</nav>
+
+    <section class="panel dsec" id="d-principe"><div class="ph"><h2>1 · Le principe</h2><span class="small muted">Suivez un athlète pas à pas</span></div>
+      <div class="pb dgrid">
+        <div class="dtext">
+          <p><b>Le biathlon, c'est deux sports opposés dans la même course.</b> Le ski de fond fait monter le cœur au maximum ; le tir demande d'être parfaitement immobile. Tout l'art est de passer de l'un à l'autre en quelques secondes.</p>
+          <ul class="facts-list"><li><b>Ski</b> : technique libre (le « skating », en pas de patineur), sur des boucles de 2 à 4 km.</li>
+            <li><b>Tir</b> : 5 cibles à <b>50 m</b>, carabine de petit calibre (.22) portée sur le dos, en position <b>couchée</b> ou <b>debout</b>.</li>
+            <li><b>Faute</b> : chaque cible manquée se paie, par un tour de pénalité ou par du temps ajouté selon le format.</li></ul>
+        </div>
+        <div class="stadium-wrap">
+          <svg class="stadium" id="stadium" viewBox="0 0 640 300" role="img" aria-label="Schéma d'un stade de biathlon : boucle de ski, pas de tir, anneau de pénalité, ligne d'arrivée">
+            <path id="p-ski" class="seg seg-ski" d="M150 236 C 60 236, 40 120, 140 70 C 260 10, 470 20, 570 80 C 640 125, 600 230, 470 238 C 380 244, 260 240, 150 236"/>
+            <g class="seg seg-range"><rect x="232" y="108" width="176" height="74" rx="8"/>
+              ${[0, 1, 2, 3, 4].map(i => `<line x1="${248 + i * 36}" y1="118" x2="${248 + i * 36}" y2="172"/>`).join("")}
+              ${[0, 1, 2, 3, 4].map(i => `<circle class="tgt" cx="${248 + i * 36}" cy="122" r="6"/>`).join("")}
+              <text x="320" y="200" text-anchor="middle">Pas de tir</text></g>
+            <g class="seg seg-pen"><ellipse id="p-pen" cx="210" cy="262" rx="44" ry="16"/><text x="210" y="292" text-anchor="middle">Anneau de pénalité (150 m)</text></g>
+            <g class="seg seg-finish"><line x1="150" y1="222" x2="150" y2="252"/><text x="150" y="214" text-anchor="middle">Départ / arrivée</text></g>
+            <text class="lbl-ski" x="360" y="40" text-anchor="middle">Boucle de ski (2 à 4 km)</text>
+            <circle id="runner" r="9" cx="150" cy="236"/>
+          </svg>
+          <div class="steps-ctl" role="group" aria-label="Étapes">
+            ${["Départ", "Ski", "Tir", "Pénalité", "Arrivée"].map((t, i) => `<button type="button" class="chip${i === 0 ? " on" : ""}" data-step="${i}">${i + 1}. ${t}</button>`).join("")}
+          </div>
+          <p class="step-txt" id="step-txt" aria-live="polite"></p>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-cibles"><div class="ph"><h2>2 · Les cibles</h2><span class="small muted">4,5 cm couché, 11,5 cm debout, à 50 m</span></div>
+      <div class="pb stack" style="gap:20px">
+        <div class="dgrid">
+          <div>
+            <div class="seg" role="group" aria-label="Position de tir"><button type="button" data-tpos="P" class="on">Couché · 4,5 cm</button><button type="button" data-tpos="S">Debout · 11,5 cm</button></div>
+            <svg class="tscale" id="tscale" viewBox="0 0 560 232" role="img" aria-label="Cibles et objets dessinés à la même échelle"></svg>
+            <p class="small muted" style="margin:6px 0 0">Tout est dessiné à la même échelle. La cible noire mesure 11,5 cm ; en position couchée, seul le centre de 4,5 cm compte, à peine plus grand qu'une balle de golf.</p>
+          </div>
+          <div class="dtext">
+            <h3>Et à 50 mètres ?</h3>
+            <p>Choisissez un objet : on calcule à quelle distance il paraîtrait aussi petit que la cible vue depuis le pas de tir.</p>
+            <div class="controls"><select id="obj-sel" aria-label="Objet de comparaison">${OBJECTS.map(o => `<option value="${o.id}"${o.id === "coin" ? " selected" : ""}>${o.name}</option>`).join("")}</select></div>
+            <p class="analogy" id="analogy" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="realsize">
+          <div><h3>La taille réelle, sur votre écran</h3>
+            <p class="small">Si votre écran était à <b id="eye-cm">50 cm</b> de vos yeux, voici la taille apparente des cibles vues à 50 m :</p>
+            <label class="small" for="eye">Distance écran–yeux</label> <input type="range" id="eye" min="25" max="90" value="50" step="5"></div>
+          <div class="rs-dots"><figure><span class="rs-dot" id="rs-p"></span><figcaption>Couché</figcaption></figure><figure><span class="rs-dot" id="rs-s"></span><figcaption>Debout</figcaption></figure></div>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-jeu"><div class="ph"><h2>3 · À vous de tirer</h2><span class="small muted">Cliquez, touchez l'écran ou appuyez sur Espace</span></div>
+      <div class="pb stack" style="gap:14px">
+        <div class="controls game-ctl">
+          <div class="seg" role="group" aria-label="Position"><button type="button" data-gpos="P" class="on">Couché</button><button type="button" data-gpos="S">Debout</button></div>
+          <label class="small bpm-l" for="bpm"><span class="heart" id="heart" aria-hidden="true">♥</span> Cœur : <b id="bpm-v">170</b> bpm</label>
+          <input type="range" id="bpm" min="60" max="190" step="5" value="170" aria-describedby="bpm-help">
+          <button class="btn" type="button" id="fire">Tirer</button><button class="btn ghost" type="button" id="reset">Recommencer</button>
+        </div>
+        <canvas id="game" tabindex="0" aria-label="Jeu de tir : la visée tremble, tirez quand elle passe sur la cible"></canvas>
+        <p class="small muted" id="bpm-help" style="margin:0">Le réticule tremble plus quand le cœur bat vite, et encore plus debout. Astuce de biathlète : tirez juste après un battement, quand la visée se stabilise.</p>
+        <div class="game-res" id="game-res" aria-live="polite"></div>
+      </div></section>
+
+    <section class="panel dsec" id="d-formats"><div class="ph"><h2>4 · Les formats de course</h2><span class="small muted">8 formats en Coupe du monde</span></div>
+      <div class="pb stack" style="gap:18px">
+        <div class="chips" role="tablist" aria-label="Formats">${FORMATS.map(f => `<button type="button" role="tab" class="chip${f.id === fmtSel ? " on" : ""}" data-fmt="${f.id}" aria-selected="${f.id === fmtSel}">${esc(f.name)}</button>`).join("")}</div>
+        <div id="fmt-card" class="fmt-card" role="tabpanel"></div>
+        <div class="dgrid">
+          <div><h3>Les distances comparées</h3><div id="dist-chart"></div></div>
+          <div><h3>Tous les formats d'un coup d'œil</h3><div class="scroll"><table class="fmt-table"><thead><tr><th>Format</th><th class="num">Femmes</th><th class="num">Hommes</th><th>Tirs</th><th>Faute</th></tr></thead><tbody>
+            ${FORMATS.map(f => `<tr data-row="${f.id}"><td><button type="button" class="linkish" data-fmt="${f.id}">${esc(f.name)}</button></td><td class="num mono">${esc(kmTxt(f.w))}</td><td class="num mono">${esc(kmTxt(f.m))}</td><td class="mono">${[...f.shoot].map(p => p === "P" ? "C" : "D").join("·")}${f.legs ? " ×" + f.legs : ""}</td><td class="small">${esc(PEN[f.pen].short)}${f.spare ? " (après 3 balles de pioche)" : ""}</td></tr>`).join("")}
+          </tbody></table></div><p class="small muted" style="margin:6px 0 0">C = couché, D = debout. Il existe aussi des formats plus rares, comme le super sprint (7,5 km, qualification puis finale à 30).</p></div>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-penalites"><div class="ph"><h2>5 · Combien coûte une faute ?</h2></div>
+      <div class="pb dgrid">
+        <div>
+          <h3>Le calculateur</h3>
+          <div class="controls"><select id="pen-fmt" aria-label="Format">${FORMATS.filter(f => !f.spare).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join("")}</select>
+            <div class="stepper"><button type="button" id="pen-minus" aria-label="Une faute de moins">−</button><output id="pen-n" aria-live="polite">2</output><button type="button" id="pen-plus" aria-label="Une faute de plus">+</button></div><span class="small">faute(s)</span></div>
+          <div id="pen-out" class="pen-out"></div>
+          <div id="pen-chart"></div>
+        </div>
+        <div>
+          <h3>Les balles de pioche, en relais</h3>
+          <p class="small">En relais, chaque tir commence par 5 balles. Pour les cibles encore debout, le relayeur peut charger à la main jusqu'à <b>3 balles de pioche</b>. Seules les cibles toujours debout après cela envoient sur l'anneau de pénalité.</p>
+          <label class="small" for="sp-miss">Cibles manquées après les 5 premières balles : <b id="sp-miss-v">2</b></label>
+          <input type="range" id="sp-miss" min="0" max="5" value="2">
+          <label class="small" for="sp-hit">Balles de pioche qui touchent : <b id="sp-hit-v">1</b></label>
+          <input type="range" id="sp-hit" min="0" max="2" value="1">
+          <div class="spare-vis" id="spare-vis" aria-live="polite"></div>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-vitesses"><div class="ph"><h2>6 · Vitesses et ordres de grandeur</h2>
+      <div class="seg" role="group" aria-label="Échelle du graphique"><button type="button" data-scale="lin" class="on">Échelle normale</button><button type="button" data-scale="log">Échelle logarithmique</button></div></div>
+      <div class="pb stack" style="gap:18px">
+        <div id="speed-chart"></div>
+        <p class="small muted" id="speed-note" style="margin:0"></p>
+        <div class="dgrid">
+          <div><h3>Le calculateur de temps</h3>
+            <label class="small" for="dist">Distance : <b id="dist-v">10 km</b></label>
+            <input type="range" id="dist" min="2.5" max="20" step="2.5" value="10">
+            <div id="time-out" class="time-out"></div></div>
+          <div class="dtext"><h3>En images</h3>
+            <ul class="facts-list" id="speed-facts"></ul></div>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-points"><div class="ph"><h2>7 · Le classement et les dossards</h2>
+      <div class="seg" role="group" aria-label="Barème"><button type="button" data-pts="std" class="on">Barème classique</button><button type="button" data-pts="ms">Mass start</button></div></div>
+      <div class="pb stack" style="gap:18px">
+        <div id="pts-chart"></div>
+        <div class="dgrid">
+          <div><h3>Combien de points ?</h3>
+            <div class="controls"><label class="small" for="pts-place">Place à l'arrivée</label><input type="number" id="pts-place" min="1" max="60" value="1" inputmode="numeric" style="width:90px"></div>
+            <p class="analogy" id="pts-out" aria-live="polite"></p>
+            <p class="small muted">Les points de toutes les courses s'additionnent sur la saison : le total donne le classement général (le gros globe de cristal), et chaque discipline a son propre classement (les petits globes).</p></div>
+          <div><h3>Les dossards de couleur</h3>
+            <div class="bibs">
+              <figure><svg viewBox="0 0 60 70" aria-hidden="true"><path d="M8 6h44l6 14-8 4v40H10V24l-8-4z" fill="#F2C300"/><text x="30" y="46" text-anchor="middle">1</text></svg><figcaption><b>Jaune</b> : leader du classement général</figcaption></figure>
+              <figure><svg viewBox="0 0 60 70" aria-hidden="true"><path d="M8 6h44l6 14-8 4v40H10V24l-8-4z" fill="#C8262F"/><text x="30" y="46" text-anchor="middle" fill="#fff">7</text></svg><figcaption><b>Rouge</b> : leader de la discipline du jour</figcaption></figure>
+              <figure><svg viewBox="0 0 60 70" aria-hidden="true"><path d="M8 6h44l6 14-8 4v40H10V24l-8-4z" fill="#1D5A8C"/><text x="30" y="46" text-anchor="middle" fill="#fff">23</text></svg><figcaption><b>Bleu</b> : meilleur athlète de moins de 23 ans</figcaption></figure>
+            </div>
+            <p class="small"><a href="#/classements">Voir les classements actuels →</a></p></div>
+        </div>
+      </div></section>
+
+    <section class="panel dsec" id="d-quiz"><div class="ph"><h2>8 · Quiz</h2><span class="small muted" id="quiz-score"></span></div>
+      <div class="pb" id="quiz"></div></section>
+    <p class="small muted">Règles : Union internationale de biathlon (IBU). Les durées de pénalité et les vitesses sont des ordres de grandeur.</p>
+  </div>`;
+
+  root.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => $("#" + b.dataset.goto, root).scrollIntoView({ behavior: "smooth", block: "start" })));
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- 1. principe : stade ---------- */
+  const steps = [
+    { seg: "finish", txt: "Départ : en sprint ou en individuel, les athlètes partent un par un, toutes les 30 secondes. En mass start et en relais, tout le monde part ensemble." },
+    { seg: "ski", txt: "Ski : une boucle de 2 à 4 km, en pas de patineur. Le cœur monte vers 170 à 190 battements par minute." },
+    { seg: "range", txt: "Tir : 5 cibles à 50 m, 5 balles. Il faut calmer sa respiration en quelques secondes ; un bon tireur boucle ses 5 balles en 25 à 30 secondes." },
+    { seg: "pen", txt: "Pénalité : une boucle de 150 m par cible manquée (environ 25 secondes à chaque fois), ou du temps ajouté en individuel." },
+    { seg: "finish", txt: "Arrivée : après le dernier tour. Le meilleur temps gagne ; en poursuite et en mass start, c'est simplement le premier à franchir la ligne." },
+  ];
+  const svg = $("#stadium", root), runner = $("#runner", root), pSki = $("#p-ski", root);
+  let anim = null;
+  const moveTo = (x, y) => { runner.setAttribute("cx", x); runner.setAttribute("cy", y); };
+  const runPath = (from, to, dur, getPt) => {
+    cancelAnimationFrame(anim); const t0 = performance.now();
+    const tick = now => { const k = Math.min(1, (now - t0) / dur); const p = getPt(from + (to - from) * k); moveTo(p.x, p.y);
+      if (k < 1 && document.body.contains(svg)) anim = requestAnimationFrame(tick); };
+    if (reduce) { const p = getPt(to); moveTo(p.x, p.y); } else anim = requestAnimationFrame(tick);
+  };
+  const L = pSki.getTotalLength();
+  const showStep = i => {
+    svg.dataset.seg = steps[i].seg; $("#step-txt", root).textContent = steps[i].txt;
+    root.querySelectorAll("[data-step]").forEach(b => b.classList.toggle("on", +b.dataset.step === i));
+    svg.querySelectorAll(".tgt").forEach((c, k) => c.classList.toggle("hit", i >= 2 && k !== 3));
+    if (i === 0) moveTo(150, 236);
+    if (i === 1) runPath(0, L, 2400, v => pSki.getPointAtLength(v));
+    if (i === 2) runPath(0, 1, 500, k => ({ x: 150 + (320 - 150) * k, y: 236 + (190 - 236) * k }));
+    if (i === 3) runPath(0, Math.PI * 2, 1400, a => ({ x: 210 + 44 * Math.cos(a + Math.PI / 2), y: 262 + 16 * Math.sin(a + Math.PI / 2) }));
+    if (i === 4) runPath(0, 1, 500, k => ({ x: 210 + (150 - 210) * k, y: 246 + (236 - 246) * k }));
+  };
+  root.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => showStep(+b.dataset.step)));
+  showStep(0);
+
+  /* ---------- 2. cibles ---------- */
+  let tpos = "P";
+  const drawScale = () => {
+    const s = 1.35; // px par mm
+    const discR = 115 / 2 * s, hitR = (tpos === "P" ? 45 : 115) / 2 * s;
+    const items = [{ n: "Pièce de 1 €", mm: 23.25 }, { n: "Balle de golf", mm: 42.7 }, { n: "CD", mm: 120 }];
+    let x = 30 + discR * 2 + 40;
+    const objs = items.map(o => { const r = o.mm / 2 * s; const cx = x + r; x += r * 2 + 34;
+      return `<circle cx="${cx}" cy="96" r="${r}" class="obj obj-${o.n.charAt(0)}"/><text x="${cx}" y="${96 + Math.max(r, 20) + 22}" text-anchor="middle">${o.n}</text><text x="${cx}" y="${96 + Math.max(r, 20) + 38}" text-anchor="middle" class="mm">${nf(o.mm / 10)} cm</text>`; }).join("");
+    $("#tscale", root).innerHTML = `<circle cx="${30 + discR}" cy="96" r="${discR}" class="disc"/>
+      <circle cx="${30 + discR}" cy="96" r="${hitR}" class="hitzone${tpos === "S" ? " full" : ""}"/>
+      <text x="${30 + discR}" y="${96 + discR + 22}" text-anchor="middle">Cible ${tpos === "P" ? "couchée" : "debout"}</text>
+      <text x="${30 + discR}" y="${96 + discR + 38}" text-anchor="middle" class="mm">zone à toucher : ${tpos === "P" ? "4,5" : "11,5"} cm</text>${objs}`;
+    const o = OBJECTS.find(x => x.id === $("#obj-sel", root).value);
+    const tgt = tpos === "P" ? 45 : 115, d = 50 * o.mm / tgt, lm = nearestLandmark(d);
+    $("#analogy", root).innerHTML = `Viser la cible <b>${tpos === "P" ? "couchée" : "debout"}</b> à 50 m, c'est comme viser <b>${esc(o.name)}</b> placé${o.f ? "e" : ""} à <b>${nf(d, d < 10 ? 1 : 0)} m</b>, soit à peu près ${esc(lm.t)}.`;
+  };
+  root.querySelectorAll("[data-tpos]").forEach(b => b.addEventListener("click", () => { tpos = b.dataset.tpos; root.querySelectorAll("[data-tpos]").forEach(x => x.classList.toggle("on", x === b)); drawScale(); }));
+  $("#obj-sel", root).addEventListener("change", drawScale);
+  drawScale();
+  const pxPerMm = 96 / 25.4;
+  const drawReal = () => {
+    const eye = +$("#eye", root).value * 10; // mm
+    $("#eye-cm", root).textContent = $("#eye", root).value + " cm";
+    [["#rs-p", 45], ["#rs-s", 115]].forEach(([sel, mm]) => { const px = Math.max(1, mm * eye / 50000 * pxPerMm); const el = $(sel, root); el.style.width = el.style.height = px.toFixed(2) + "px"; });
+  };
+  $("#eye", root).addEventListener("input", drawReal); drawReal();
+
+  /* ---------- 3. jeu de tir ---------- */
+  setupShootingGame(root);
+
+  /* ---------- 4. formats ---------- */
+  const showFmt = id => {
+    LS.set("dFmt", id);
+    const f = FORMATS.find(x => x.id === id);
+    root.querySelectorAll("[data-fmt].chip").forEach(b => { const on = b.dataset.fmt === id; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+    root.querySelectorAll("tr[data-row]").forEach(tr => tr.classList.toggle("sel", tr.dataset.row === id));
+    $("#fmt-card", root).innerHTML = `<div class="fc-head"><h3>${esc(f.name)}</h3>
+        <div class="fc-badges"><span class="fc-b"><small>Femmes</small>${esc(kmTxt(f.w))}</span><span class="fc-b"><small>Hommes</small>${esc(kmTxt(f.m))}</span>
+        <span class="fc-b"><small>Tirs</small>${f.shoot.length}${f.legs ? " par relayeur" : ""}</span><span class="fc-b"><small>Faute</small>${esc(PEN[f.pen].short)}</span></div></div>
+      ${formatStrip(f)}
+      <div class="dgrid fc-txt"><p><b>Départ.</b> ${esc(f.start)}.<br>${esc(f.what)}</p><p class="analogy">${esc(f.like)}</p></div>
+      <p class="small"><a href="#/courses">Voir les courses de ce format au calendrier →</a></p>`;
+  };
+  root.querySelectorAll("[data-fmt]").forEach(b => b.addEventListener("click", () => { showFmt(b.dataset.fmt); if (b.classList.contains("linkish")) $("#fmt-card", root).scrollIntoView({ behavior: "smooth", block: "center" }); }));
+  showFmt(FORMATS.some(f => f.id === fmtSel) ? fmtSel : "SP");
+  const distRows = FORMATS.map(f => ({ n: f.name, w: typeof f.w === "number" ? f.w : f.wn, m: typeof f.m === "number" ? f.m : f.mn })).filter(r => r.w && r.m);
+  const maxD = Math.max(...distRows.flatMap(r => [r.w, r.m]));
+  $("#dist-chart", root).innerHTML = `<div class="hbars">${distRows.map(r => `<div class="hb-row"><span class="hb-l">${esc(r.n)}</span><div class="hb-bars">
+      <span class="hb hb-w" style="width:${(100 * r.w / maxD).toFixed(1)}%"><b>${nf(r.w)} km</b></span><span class="hb hb-m" style="width:${(100 * r.m / maxD).toFixed(1)}%"><b>${nf(r.m)} km</b></span></div></div>`).join("")}</div>
+    <div class="legend" style="margin-top:8px"><span><i class="g-bg-SW"></i>Femmes</span><span><i class="g-bg-SM"></i>Hommes</span></div><p class="small muted" style="margin:6px 0 0">Relais : distance totale de l'équipe.</p>`;
+
+  /* ---------- 5. pénalités ---------- */
+  let penN = 2;
+  const drawPen = () => {
+    const f = FORMATS.find(x => x.id === $("#pen-fmt", root).value), p = PEN[f.pen];
+    const maxN = f.shoot.length * 5; penN = Math.max(0, Math.min(maxN, penN));
+    $("#pen-n", root).textContent = penN;
+    const lost = penN * p.s, metres = lost * 25 / 3.6;
+    $("#pen-out", root).innerHTML = `<p class="analogy">${penN ? `<b>${penN} faute${penN > 1 ? "s" : ""}</b> en ${esc(f.name.toLowerCase())} = ${f.pen.startsWith("loop") ? `<b>${penN} tour${penN > 1 ? "s" : ""}</b> de pénalité, soit environ <b>${nf(lost, 0)} s</b>` : `<b>${lost % 60 ? `${Math.floor(lost / 60) ? Math.floor(lost / 60) + " min " : ""}${lost % 60} s` : `${lost / 60} minute${lost / 60 > 1 ? "s" : ""}`}</b> ajoutée${lost > 60 || lost % 60 ? "s" : ""} au temps`}. Pendant ce temps, un concurrent sans faute parcourt environ <b>${nf(metres, 0)} m</b> de piste.` : "Aucune faute : le « sans-faute », le rêve de tout biathlète."}</p>
+      <div class="pen-bar" role="img" aria-label="${nf(lost, 0)} secondes perdues">${Array.from({ length: penN }, () => `<span style="flex:${p.s}"></span>`).join("")}<i style="flex:${Math.max(1, 300 - lost)}"></i></div>
+      <p class="small muted" style="margin:4px 0 0">Barre complète : 5 minutes. Chaque bloc rouge est une faute.</p>`;
+    const rows = Object.entries({ "Tour de 75 m": 13, "Tour de 150 m": 25, "Individuel court": 45, "Individuel": 60 });
+    $("#pen-chart", root).innerHTML = `<h3 style="margin-top:18px">Le prix d'une faute selon le format</h3><div class="hbars">${rows.map(([n, s]) => `<div class="hb-row"><span class="hb-l">${n}</span><div class="hb-bars"><span class="hb hb-pen" style="width:${(100 * s / 60).toFixed(1)}%"><b>≈ ${s} s</b></span></div></div>`).join("")}</div>`;
+  };
+  $("#pen-fmt", root).addEventListener("change", drawPen);
+  $("#pen-minus", root).addEventListener("click", () => { penN--; drawPen(); });
+  $("#pen-plus", root).addEventListener("click", () => { penN++; drawPen(); });
+  drawPen();
+  const drawSpare = () => {
+    const miss = +$("#sp-miss", root).value, hitIn = $("#sp-hit", root);
+    hitIn.max = Math.min(3, miss); if (+hitIn.value > miss) hitIn.value = Math.min(3, miss);
+    const hit = Math.min(+hitIn.value, 3, miss), used = miss ? Math.min(3, Math.max(hit, Math.min(3, miss))) : 0;
+    const loops = miss - hit;
+    $("#sp-miss-v", root).textContent = miss; $("#sp-hit-v", root).textContent = hit;
+    const tg = [...Array(5)].map((_, i) => i < 5 - miss ? "h" : (i < 5 - miss + hit ? "s" : "m"));
+    const spares = miss ? (loops ? 3 : hit) : 0;
+    $("#spare-vis", root).innerHTML = `<div class="sv-row"><span class="small">Cibles</span><span class="stage">${tg.map(t => `<i class="tg ${t === "m" ? "m" : "h"}${t === "s" ? " spare" : ""}"></i>`).join("")}</span></div>
+      <div class="sv-row"><span class="small">Balles</span><span class="ammo">${[...Array(5)].map(() => '<i class="b"></i>').join("")}${[...Array(spares)].map(() => '<i class="b sp"></i>').join("")}</span></div>
+      <p class="analogy">${miss === 0 ? "5 balles, 5 cibles : aucune balle de pioche, on repart aussitôt." : `${spares} balle${spares > 1 ? "s" : ""} de pioche utilisée${spares > 1 ? "s" : ""} (chargées une par une, environ 5 secondes chacune)${loops ? `, et <b>${loops} tour${loops > 1 ? "s" : ""} de pénalité</b> pour ${loops > 1 ? "les cibles restantes" : "la cible restante"}` : ", <b>sans tour de pénalité</b>"}.`}</p>`;
+  };
+  $("#sp-miss", root).addEventListener("input", drawSpare); $("#sp-hit", root).addEventListener("input", drawSpare); drawSpare();
+
+  /* ---------- 6. vitesses ---------- */
+  let biathlonKmh = 25, speedSource = "ordre de grandeur";
+  try {
+    const sid = META.currentResultsSeason; const s = await season(sid);
+    const sprints = (s.events || []).flatMap(e => e.races || []).filter(r => r.RaceId.endsWith("SMSP") && r.km).sort((a, b) => String(b.StartTime).localeCompare(String(a.StartTime)));
+    for (const r of sprints.slice(0, 4)) {
+      const an = await data(`analysis/${r.RaceId}.json`).catch(() => null);
+      const times = an ? Object.values(an.athletes || {}).map(x => x.c && secs(x.c[0])).filter(Boolean) : [];
+      if (times.length) { const best = Math.min(...times); biathlonKmh = +r.km / (best / 3600); speedSource = `le skieur le plus rapide du sprint hommes de ${r.StartTime ? new Date(r.StartTime).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : "la saison"}, d'après les temps de ski de l'IBU`; break; }
+    }
+  } catch (e) {}
+  const SPEEDS = [
+    { n: "Marche", v: 5 }, { n: "Footing", v: 10 }, { n: "Record du marathon", v: 21 }, { n: "Biathlète sur les skis", v: biathlonKmh, hi: true },
+    { n: "Descente en biathlon", v: 50, note: "environ" }, { n: "Voiture en ville", v: 50 }, { n: "Balle de carabine", v: 1220 },
+  ];
+  let scale = "lin";
+  const drawSpeeds = () => {
+    const max = Math.max(...SPEEDS.map(s => s.v)), lmin = Math.log10(3), lmax = Math.log10(max);
+    const w = v => scale === "log" ? 100 * (Math.log10(v) - lmin) / (lmax - lmin) : 100 * v / max;
+    $("#speed-chart", root).innerHTML = `<div class="hbars">${SPEEDS.map(s => `<div class="hb-row${s.hi ? " hi" : ""}"><span class="hb-l">${esc(s.n)}</span><div class="hb-bars"><span class="hb${s.hi ? " hb-hi" : ""}" style="width:${Math.max(0.6, w(s.v)).toFixed(1)}%"><b>${s.note ? "≈ " : ""}${nf(s.v, s.v < 30 ? 1 : 0)} km/h</b></span></div></div>`).join("")}</div>`;
+    $("#speed-note", root).textContent = scale === "lin" ? "En échelle normale, la balle écrase tout : passez en échelle logarithmique pour comparer les autres vitesses." : "En échelle logarithmique, chaque graduation multiplie la vitesse : on voit enfin la différence entre un footing et un biathlète.";
+  };
+  root.querySelectorAll("[data-scale]").forEach(b => b.addEventListener("click", () => { scale = b.dataset.scale; root.querySelectorAll("[data-scale]").forEach(x => x.classList.toggle("on", x === b)); drawSpeeds(); }));
+  drawSpeeds();
+  const drawTimes = () => {
+    const d = +$("#dist", root).value; $("#dist-v", root).textContent = nf(d) + " km";
+    const rows = [["Vous, en marchant", 5], ["Vous, en footing", 10], ["Un biathlète sur les skis", biathlonKmh]];
+    $("#time-out", root).innerHTML = rows.map(([n, v]) => { const t = d / v * 3600;
+      return `<div class="to-row"><span>${n}</span><b class="mono">${t >= 3600 ? Math.floor(t / 3600) + " h " + String(Math.round(t % 3600 / 60)).padStart(2, "0") : Math.round(t / 60) + " min"}</b></div>`; }).join("");
+  };
+  $("#dist", root).addEventListener("input", drawTimes); drawTimes();
+  $("#speed-facts", root).innerHTML = [
+    `Sur les skis, un biathlète avance à environ <b>${nf(biathlonKmh, 0)} km/h</b> en moyenne : la vitesse d'un cycliste du dimanche, mais à la force des bras et des jambes. <span class="muted">(Source : ${esc(speedSource)}.)</span>`,
+    `La balle sort du canon à environ <b>340 m/s</b> : elle met <b>0,15 seconde</b> pour franchir les 50 m, moins qu'un clignement d'œil.`,
+    `En arrivant au pas de tir, le cœur bat à <b>170–180 battements par minute</b>, soit 3 par seconde. Le tireur appuie sur la détente entre deux battements.`,
+    `Un tour de pénalité de 150 m coûte environ <b>25 secondes</b> : à ${nf(biathlonKmh, 0)} km/h, c'est près de <b>${nf(25 * biathlonKmh / 3.6, 0)} m</b> de piste perdus.`,
+  ].map(t => `<li>${t}</li>`).join("");
+
+  /* ---------- 7. points ---------- */
+  let ptsMode = "std";
+  const drawPts = () => {
+    const arr = ptsMode === "ms" ? MS_POINTS : WC_POINTS;
+    $("#pts-chart", root).innerHTML = `<div class="vbars" role="img" aria-label="Points par place, de 1 à ${arr.length}">${arr.map((p, i) => `<span class="vb${i < 3 ? " top" + (i + 1) : ""}" style="height:${(100 * p / 90).toFixed(1)}%" title="${i + 1}${i ? "e" : "er"} : ${p} points"></span>`).join("")}</div>
+      <div class="vb-axis"><span>1er</span><span>10e</span><span>20e</span><span>${arr.length}e</span></div>`;
+    const place = Math.max(1, Math.round(+$("#pts-place", root).value || 1)), pts = arr[place - 1] || 0;
+    $("#pts-out", root).innerHTML = pts ? `${place === 1 ? "Une victoire" : `Une ${place}e place`} rapporte <b>${pts} point${pts > 1 ? "s" : ""}</b>${place > 1 ? `, soit ${nf(100 * pts / 90, 0)} % d'une victoire` : ""}.` : `Au-delà de la ${arr.length}e place, on ne marque <b>aucun point</b>${ptsMode === "ms" ? " (en mass start, seuls 30 athlètes prennent le départ)" : ""}.`;
+    root.querySelectorAll(".vb").forEach((b, i) => b.classList.toggle("cur", i === place - 1));
+  };
+  root.querySelectorAll("[data-pts]").forEach(b => b.addEventListener("click", () => { ptsMode = b.dataset.pts; root.querySelectorAll("[data-pts]").forEach(x => x.classList.toggle("on", x === b)); drawPts(); }));
+  $("#pts-place", root).addEventListener("input", drawPts); drawPts();
+
+  /* ---------- 8. quiz ---------- */
+  const Q = [
+    { q: "À quelle distance se trouvent les cibles ?", a: ["25 m", "50 m", "100 m"], ok: 1, why: "Toujours 50 m, en position couchée comme debout." },
+    { q: "Quelle est la taille de la zone à toucher en position couchée ?", a: ["Une pièce de 1 €", "Une balle de golf", "Un CD"], ok: 1, why: "4,5 cm, à peine plus qu'une balle de golf (4,27 cm). Debout, c'est 11,5 cm, la taille d'un CD." },
+    { q: "En individuel, que coûte une cible manquée ?", a: ["Un tour de 150 m", "45 secondes", "Une minute"], ok: 2, why: "Une minute ajoutée au temps. En individuel court, c'est 45 secondes." },
+    { q: "Combien de balles de pioche a un relayeur à chaque tir ?", a: ["Aucune", "3", "5"], ok: 1, why: "3 balles, chargées à la main, avant de devoir faire des tours de pénalité." },
+    { q: "En poursuite, qui gagne ?", a: ["Le meilleur temps total", "Le premier à franchir la ligne", "Celui qui a le moins de fautes"], ok: 1, why: "Les départs sont décalés selon le sprint : le premier sur la ligne est le vainqueur." },
+    { q: "Combien de points rapporte une victoire en Coupe du monde ?", a: ["60", "90", "100"], ok: 1, why: "90 points pour la victoire, 75 pour la 2e place, 65 pour la 3e." },
+    { q: "Que signifie le dossard jaune ?", a: ["Le plus jeune athlète", "Le leader du classement général", "Le vainqueur de la veille"], ok: 1, why: "Il est porté par le leader du classement général de la Coupe du monde." },
+  ];
+  const answers = new Array(Q.length).fill(null);
+  const drawQuiz = () => {
+    const good = answers.filter((a, i) => a === Q[i].ok).length, done = answers.filter(a => a != null).length;
+    $("#quiz-score", root).textContent = done ? `${good} / ${Q.length} bonnes réponses` : `${Q.length} questions`;
+    $("#quiz", root).innerHTML = `<ol class="quiz">${Q.map((q, i) => `<li><p class="qq">${esc(q.q)}</p><div class="qa">${q.a.map((t, k) => {
+        const st = answers[i] == null ? "" : k === q.ok ? " good" : k === answers[i] ? " bad" : " dim";
+        return `<button type="button" class="chip${st}" data-q="${i}" data-a="${k}"${answers[i] != null ? " disabled" : ""}>${esc(t)}</button>`; }).join("")}</div>
+      ${answers[i] != null ? `<p class="small qwhy">${answers[i] === q.ok ? "✓ Bien vu. " : "✗ Raté. "}${esc(q.why)}</p>` : ""}</li>`).join("")}</ol>
+      ${done === Q.length ? `<div class="analogy">${good === Q.length ? "Sans-faute ! Vous êtes prêt pour le dossard jaune." : good >= 5 ? "Très bien : quelques tours de pénalité, mais un beau podium." : "Quelques tours de pénalité… relisez les sections au-dessus et retentez !"} <button type="button" class="btn ghost sm" id="quiz-reset">Recommencer</button></div>` : ""}`;
+    root.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { answers[+b.dataset.q] = +b.dataset.a; drawQuiz(); }));
+    const rs = $("#quiz-reset", root); if (rs) rs.addEventListener("click", () => { answers.fill(null); drawQuiz(); });
+  };
+  drawQuiz();
+}
+
+/* Jeu de tir : la visée oscille selon la position et le rythme cardiaque */
+function setupShootingGame(root) {
+  const cv = $("#game", root), ctx = cv.getContext("2d");
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let pos = "P", bpm = 170, shots = [], t0 = performance.now(), raf = 0, W = 600, H = 250, dpr = 1, lastShot = null;
+  const geo = () => { const R = Math.min(W * 0.062, H * 0.2); return { R, hitR: pos === "P" ? R * 45 / 115 : R, cy: H * 0.52, cx: i => W * (0.18 + i * 0.16) }; };
+  const resize = () => { dpr = window.devicePixelRatio || 1; W = cv.clientWidth || 600; H = Math.round(Math.min(W * 0.42, 300)); cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  const aim = t => {
+    const g = geo(), i = Math.min(shots.length, 4);
+    const A = g.R * (pos === "P" ? 0.27 : 0.6) * Math.pow(bpm / 100, 1.5);
+    const s = t / 1000;
+    let x = A * (0.8 * Math.sin(1.1 * s) + 0.45 * Math.sin(2.7 * s + 1.3) + 0.22 * Math.sin(5.3 * s + 0.4));
+    let y = A * (0.7 * Math.sin(0.9 * s + 2) + 0.5 * Math.sin(2.3 * s + 0.7) + 0.2 * Math.sin(6.1 * s));
+    const ph = (s * bpm / 60) % 1; if (ph < 0.14) y -= A * 0.7 * Math.sin(ph / 0.14 * Math.PI);
+    return { x: g.cx(i) + x, y: g.cy + y, ph };
+  };
+  const draw = now => {
+    if (!document.body.contains(cv)) return;
+    const g = geo(), ink = css("--ink"), paper = css("--paper"), muted = css("--muted"), red = css("--red");
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = css("--line-soft"); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W * 0.08, g.cy - g.R * 1.9, W * 0.84, g.R * 3.8, 12) : ctx.rect(W * 0.08, g.cy - g.R * 1.9, W * 0.84, g.R * 3.8); ctx.fill();
+    for (let i = 0; i < 5; i++) {
+      const sh = shots[i];
+      ctx.beginPath(); ctx.arc(g.cx(i), g.cy, g.R, 0, Math.PI * 2);
+      ctx.fillStyle = sh && sh.hit ? "#F3F6F8" : "#111A20"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = sh && sh.hit ? "#B9C4CC" : "#000"; ctx.stroke();
+      if (pos === "P" && !(sh && sh.hit)) { ctx.beginPath(); ctx.arc(g.cx(i), g.cy, g.hitR, 0, Math.PI * 2); ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1; ctx.stroke(); }
+      if (sh && !sh.hit) { ctx.beginPath(); ctx.arc(sh.x, sh.y, 3.5, 0, Math.PI * 2); ctx.fillStyle = red; ctx.fill(); }
+      if (i === shots.length && shots.length < 5) { ctx.fillStyle = muted; ctx.font = "12px system-ui"; ctx.textAlign = "center"; ctx.fillText("▲", g.cx(i), g.cy + g.R + 18); }
+    }
+    if (shots.length < 5) {
+      const a = aim(now - t0); const r = g.R * 0.75;
+      ctx.strokeStyle = red; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(a.x, a.y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(a.x - r - 8, a.y); ctx.lineTo(a.x - 4, a.y); ctx.moveTo(a.x + 4, a.y); ctx.lineTo(a.x + r + 8, a.y);
+      ctx.moveTo(a.x, a.y - r - 8); ctx.lineTo(a.x, a.y - 4); ctx.moveTo(a.x, a.y + 4); ctx.lineTo(a.x, a.y + r + 8); ctx.stroke();
+      const heart = $("#heart", root); if (heart) heart.classList.toggle("beat", a.ph < 0.14);
+    }
+    if (lastShot && now - lastShot.t < 250) { ctx.globalAlpha = 1 - (now - lastShot.t) / 250; ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 10 + (now - lastShot.t) / 10, 0, Math.PI * 2); ctx.strokeStyle = ink; ctx.stroke(); ctx.globalAlpha = 1; }
+    ctx.fillStyle = muted; ctx.font = "12px system-ui"; ctx.textAlign = "left";
+    ctx.fillText(`${pos === "P" ? "Couché" : "Debout"} · balle ${Math.min(shots.length + 1, 5)}/5`, W * 0.08, H - 8);
+    raf = requestAnimationFrame(draw);
+  };
+  const result = () => {
+    const out = $("#game-res", root); const hits = shots.filter(s => s.hit).length, miss = 5 - hits;
+    if (shots.length < 5) { out.innerHTML = `<span class="stage">${shots.map(s => `<i class="tg ${s.hit ? "h" : "m"}"></i>`).join("")}</span>`; return; }
+    out.innerHTML = `<div class="analogy"><span class="stage">${shots.map(s => `<i class="tg ${s.hit ? "h" : "m"}"></i>`).join("")}</span>
+      <b>${hits}/5</b>${miss ? ` : en sprint, ${miss} tour${miss > 1 ? "s" : ""} de pénalité (≈ ${miss * 25} s) ; en individuel, ${miss} minute${miss > 1 ? "s" : ""} ajoutée${miss > 1 ? "s" : ""}.` : " : sans-faute, bravo !"}
+      ${bpm >= 150 ? `<span class="small"> Essayez à ${pos === "P" ? "120" : "100"} bpm pour sentir la différence.</span>` : ""}</div>`;
+  };
+  const fire = () => {
+    if (shots.length >= 5) return;
+    const g = geo(), a = aim(performance.now() - t0), i = shots.length;
+    const hit = Math.hypot(a.x - g.cx(i), a.y - g.cy) <= g.hitR;
+    shots.push({ hit, x: a.x, y: a.y }); lastShot = { x: a.x, y: a.y, t: performance.now() }; result();
+  };
+  const reset = () => { shots = []; t0 = performance.now(); result(); };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); fire(); });
+  cv.addEventListener("keydown", e => { if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); fire(); } });
+  $("#fire", root).addEventListener("click", fire);
+  $("#reset", root).addEventListener("click", reset);
+  root.querySelectorAll("[data-gpos]").forEach(b => b.addEventListener("click", () => { pos = b.dataset.gpos; root.querySelectorAll("[data-gpos]").forEach(x => x.classList.toggle("on", x === b)); reset(); }));
+  $("#bpm", root).addEventListener("input", e => { bpm = +e.target.value; $("#bpm-v", root).textContent = bpm; $("#heart", root).style.animationDuration = (60 / bpm) + "s"; });
+  const ro = new ResizeObserver(() => { if (!document.body.contains(cv)) { ro.disconnect(); return; } resize(); });
+  ro.observe(cv); resize(); result(); raf = requestAnimationFrame(draw);
+}
+
 /* ================================================================ apparence */
 function applyTheme(v) {
   const root = document.documentElement;
@@ -1703,7 +2324,7 @@ async function route() {
   clearInterval(liveTimer); liveTimer = null; CHARTS.clear();
   const root = $("#view");
   const [page, arg, arg2] = location.hash.replace(/^#\/?/, "").split("/");
-  const tab = { calendrier: "calendrier", courses: "courses", course: "courses", recherche: "athletes", athlete: "athletes", nations: "athletes", nation: "athletes", comparer: "athletes" }[page] || "classements";
+  const tab = { decouvrir: "decouvrir", calendrier: "calendrier", courses: "courses", course: "courses", recherche: "athletes", athlete: "athletes", nations: "athletes", nation: "athletes", comparer: "athletes" }[page] || "classements";
   document.querySelectorAll("nav.tabs a").forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
   if (!META) {
@@ -1711,6 +2332,7 @@ async function route() {
     try { await boot(); } catch (e) { root.innerHTML = errorHTML(e instanceof Missing ? new Error("Les données ne sont pas encore générées. Revenez dans quelques minutes.") : e); return; }
   }
   const a = decodeURIComponent(arg || "");
+  if (page === "decouvrir") return viewDiscover(root);
   if (page === "calendrier") return viewCalendar(root);
   if (page === "nations") return viewNations(root);
   if (page === "nation" && a) return viewNation(root, a);
