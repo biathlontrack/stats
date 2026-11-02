@@ -352,6 +352,17 @@ nav.tabs{order:2}
 .subtabs a:hover{color:var(--ink);text-decoration:none}
 .subtabs a.on{color:var(--ink);border-bottom-color:var(--accent)}
 @media (max-width:600px){.subtabs a{padding:9px 10px;font-size:16px}}
+.fold-h{margin:0;font-size:inherit;letter-spacing:0;text-transform:none}
+.fold-h button{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--line);border-radius:8px 8px 0 0}
+.browse.closed .fold-h button{border-bottom:0;border-radius:8px}
+.fold-h button:hover{background:var(--line-soft)}
+.fold-h button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.fold-t{font-family:var(--display);font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.1}
+.fold-c{margin-right:auto}
+.chev{width:22px;height:22px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.browse.closed .chev{transform:rotate(-90deg)}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+@media (max-width:600px){.fold-t{font-size:20px}.fold-c{order:3;width:100%;margin:0}.chev{margin-left:auto}}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -1069,11 +1080,12 @@ async function viewCompare(root, arg) {
       <div class="pick-row">
         <div class="pick-search"><input type="search" id="cmp-q" placeholder="Rechercher un athlète (nom ou prénom)" autocomplete="off" aria-label="Rechercher un athlète à ajouter" aria-controls="cmp-sugg">
           <div class="sugg" id="cmp-sugg" role="listbox" hidden></div></div>
-        <button class="btn ghost" id="browse-toggle" type="button" aria-controls="browse" aria-expanded="${browseOpen}">${browseOpen ? "Masquer la liste" : "Parcourir la liste"}</button>
       </div>
-      <section class="panel browse" id="browse"${browseOpen ? "" : " hidden"}>
-        <div class="ph"><h2>Liste des athlètes</h2><span class="small muted" id="b-count"></span></div>
-        <div class="pb stack" style="gap:12px">
+      <section class="panel browse${browseOpen ? "" : " closed"}" id="browse">
+        <h2 class="fold-h"><button type="button" id="browse-toggle" aria-expanded="${browseOpen}" aria-controls="browse-body">
+          <span class="fold-t">Liste des athlètes</span><span class="small muted fold-c" id="b-count"></span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
+        <div class="pb stack" id="browse-body" style="gap:12px"${browseOpen ? "" : " hidden"}>
           <div class="controls"><input type="search" id="b-q" placeholder="Filtrer par nom" value="${esc(bf.q)}" aria-label="Filtrer la liste par nom" autocomplete="off">
             <select id="b-nat" aria-label="Nation"><option value="">Toutes les nations</option></select>
             <select id="b-g" aria-label="Catégorie"><option value="">Femmes et hommes</option><option value="SW">Femmes</option><option value="SM">Hommes</option></select></div>
@@ -1141,9 +1153,9 @@ async function viewCompare(root, arg) {
   let t; bq.addEventListener("input", () => { clearTimeout(t); t = setTimeout(drawList, 120); });
   bnat.addEventListener("change", drawList); bg.addEventListener("change", drawList);
   $("#browse-toggle", root).addEventListener("click", ev => {
-    browse.hidden = !browse.hidden; LS.set("cmpBrowse", !browse.hidden);
-    ev.currentTarget.setAttribute("aria-expanded", String(!browse.hidden));
-    ev.currentTarget.textContent = browse.hidden ? "Parcourir la liste" : "Masquer la liste";
+    const body = $("#browse-body", root), open = body.hidden;
+    body.hidden = !open; browse.classList.toggle("closed", !open); LS.set("cmpBrowse", open);
+    ev.currentTarget.setAttribute("aria-expanded", String(open));
   });
   drawList();
 
