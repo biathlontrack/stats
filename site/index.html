@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E1C25">
+<script>try{var t=JSON.parse(localStorage.getItem("bdc:theme"));if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
 <meta name="description" content="Classements de la Coupe du monde de biathlon, résultats des courses, fiches et statistiques des athlètes, à partir des données IBU.">
 <title>Biathlon Datacenter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230E1C25'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23F3F6F8' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23F2C300'/%3E%3C/svg%3E">
@@ -321,6 +322,19 @@ tr.stage-row .stage{justify-content:flex-end}
   .mpt{display:none}
   .cal-filters #jump-agenda{margin-left:0}
 }
+.brand{order:1}
+nav.tabs{order:2}
+.theme{order:3;margin-left:auto;display:inline-flex;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.16);border-radius:999px;flex:none}
+.theme button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:999px;color:var(--band-muted);font-size:13px;font-weight:600;cursor:pointer}
+.theme button:hover{color:var(--band-ink)}
+.theme button:focus-visible{outline:2px solid var(--bib);outline-offset:1px}
+.theme button.on{background:rgba(255,255,255,.14);color:var(--band-ink)}
+.theme svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.theme svg .fill{fill:currentColor;stroke:none}
+.theme button[data-theme-set="dark"] svg path{fill:currentColor;stroke:none}
+.theme button[data-theme-set="light"] svg circle{fill:currentColor}
+@media (max-width:900px){.theme span{display:none}.theme button{padding:0 8px}}
+@media (max-width:600px){.theme{order:2}nav.tabs{order:3;width:100%}.brand{font-size:18px;gap:8px}.brand .t5 i{width:7px;height:7px}.theme button{height:28px;padding:0 7px}}
 .olp{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--snow)}
 .olstep{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
 .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -340,6 +354,11 @@ tr.stage-row .stage{justify-content:flex-end}
       <a href="#/recherche" data-tab="recherche">Athlètes</a>
       <a href="#/comparer" data-tab="comparer">Comparer</a>
     </nav>
+    <div class="theme" role="group" aria-label="Apparence du site">
+      <button type="button" data-theme-set="light" title="Mode clair"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg><span>Clair</span></button>
+      <button type="button" data-theme-set="auto" title="Comme l'appareil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" class="fill"/></svg><span>Auto</span></button>
+      <button type="button" data-theme-set="dark" title="Mode sombre"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><span>Sombre</span></button>
+    </div>
   </div>
 </header>
 <main class="wrap" id="view" aria-live="polite"></main>
@@ -1619,6 +1638,18 @@ async function viewCalendar(root) {
     </section>`).join("")}</div>
     <p class="small muted" style="margin:12px 0 0">« Agenda » télécharge la course (fichier .ics, rappel 30 minutes avant le départ) pour Apple Calendrier ou tout autre agenda. « Outlook » et « Google » l'ouvrent pré-remplie dans votre agenda en ligne. Durées indicatives.</p>`;
 }
+
+/* ================================================================ apparence */
+function applyTheme(v) {
+  const root = document.documentElement;
+  if (v === "light" || v === "dark") root.dataset.theme = v; else { delete root.dataset.theme; v = "auto"; }
+  LS.set("theme", v);
+  document.querySelectorAll("[data-theme-set]").forEach(b => {
+    const on = b.dataset.themeSet === v; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+  });
+}
+document.querySelectorAll("[data-theme-set]").forEach(b => b.addEventListener("click", () => applyTheme(b.dataset.themeSet)));
+applyTheme(LS.get("theme", "auto"));
 
 /* ================================================================ routeur */
 async function route() {
